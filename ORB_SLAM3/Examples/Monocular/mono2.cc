@@ -86,7 +86,7 @@ int main(int argc, char **argv)
         cv::VideoCapture cap;
         // open the default camera, use something different from 0 otherwise;
         // Check VideoCapture documentation.
-        if(!cap.open(2))
+        if(!cap.open(0))
             return 0;
     
         // Main loop
