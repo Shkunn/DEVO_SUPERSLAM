@@ -172,15 +172,6 @@ add_executable(stereo_kitti
 Examples/Stereo/stereo_kitti.cc)
 target_link_libraries(stereo_kitti ${PROJECT_NAME})
 
-add_executable(stereo_euroc_zed
-Examples/Stereo/stereo_euroc_zed.cc)
-target_link_libraries(stereo_euroc_zed ${PROJECT_NAME}
-/usr/local/cuda/lib64/libcudart.so
-	/usr/local/zed/lib/libsl_zed.so
-	/usr/lib/x86_64-linux-gnu/libopenblas.so
-    /usr/lib/x86_64-linux-gnu/libusb-1.0.so
-    /usr/lib/x86_64-linux-gnu/libcuda.so)
-
 add_executable(try_solo
 Examples/Stereo/try_solo.cc)
 target_link_libraries(try_solo ${PROJECT_NAME}
@@ -216,15 +207,6 @@ target_link_libraries(mono2 ${PROJECT_NAME})
 add_executable(mono_tum_vi
 Examples/Monocular/mono_tum_vi.cc)
 target_link_libraries(mono_tum_vi ${PROJECT_NAME})
-
-add_executable(simple
-Examples/Monocular/simple.cc)
-target_link_libraries(simple ${PROJECT_NAME}
-/usr/local/cuda/lib64/libcudart.so
-	/usr/local/zed/lib/libsl_zed.so
-	/usr/lib/x86_64-linux-gnu/libopenblas.so
-    /usr/lib/x86_64-linux-gnu/libusb-1.0.so
-    /usr/lib/x86_64-linux-gnu/libcuda.so)
 
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular-Inertial)
