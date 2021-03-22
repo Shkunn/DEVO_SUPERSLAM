@@ -12,6 +12,30 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 
+set(OpenCV_DIR /home/thomas/Documents/opencv-3.4.13/build)
+
+#####
+find_package(ZED 3 REQUIRED)
+find_package(CUDA 11.1 EXACT REQUIRED)
+
+include_directories(/usr/local/zed/include)
+include_directories(/usr/local/cuda/include)
+
+link_directories(/usr/local/zed/lib)
+link_directories(/usr/local/cuda/lib)
+
+#ADD_EXECUTABLE(main src/main.cpp)
+
+# TARGET_LINK_LIBRARIES(
+    # main
+	# /usr/local/cuda/lib64/libcudart.so
+	# /usr/local/zed/lib/libsl_zed.so
+	# /usr/lib/x86_64-linux-gnu/libopenblas.so
+    # /usr/lib/x86_64-linux-gnu/libusb-1.0.so
+    # /usr/lib/x86_64-linux-gnu/libcuda.so
+# )
+#####
+
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-deprecated -O3 -march=native ")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated -O3 -march=native")
 
@@ -47,12 +71,18 @@ MESSAGE(${OpenCV_VERSION})
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
 
+find_package(ZED 3 REQUIRED)
+find_package(CUDA ${ZED_CUDA_VERSION} EXACT REQUIRED)
+
+
 include_directories(
 ${PROJECT_SOURCE_DIR}
 ${PROJECT_SOURCE_DIR}/include
 ${PROJECT_SOURCE_DIR}/include/CameraModels
 ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
+${CUDA_INCLUDE_DIRS}
+${ZED_INCLUDE_DIRS}
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -66,7 +96,7 @@ src/ORBextractor.cc
 src/ORBmatcher.cc
 src/FrameDrawer.cc
 src/Converter.cc
-src/MapPoint.cc
+src/MapPoint.cc      
 src/KeyFrame.cc
 src/Atlas.cc
 src/Map.cc
@@ -126,6 +156,8 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 -lcrypto
 )
 
+link_directories(${ZED_LIBRARY_DIR})
+link_directories(${CUDA_LIBRARY_DIRS})
 
 # Build examples
 
@@ -134,16 +166,29 @@ add_executable(rgbd_tum
 Examples/RGB-D/rgbd_tum.cc)
 target_link_libraries(rgbd_tum ${PROJECT_NAME})
 
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo)
 
 add_executable(stereo_kitti
 Examples/Stereo/stereo_kitti.cc)
 target_link_libraries(stereo_kitti ${PROJECT_NAME})
 
-add_executable(stereo_euroc
-Examples/Stereo/stereo_euroc.cc)
-target_link_libraries(stereo_euroc ${PROJECT_NAME})
+add_executable(stereo_euroc_zed
+Examples/Stereo/stereo_euroc_zed.cc)
+target_link_libraries(stereo_euroc_zed ${PROJECT_NAME}
+/usr/local/cuda/lib64/libcudart.so
+	/usr/local/zed/lib/libsl_zed.so
+	/usr/lib/x86_64-linux-gnu/libopenblas.so
+    /usr/lib/x86_64-linux-gnu/libusb-1.0.so
+    /usr/lib/x86_64-linux-gnu/libcuda.so)
+
+add_executable(try_solo
+Examples/Stereo/try_solo.cc)
+target_link_libraries(try_solo ${PROJECT_NAME}
+/usr/local/cuda/lib64/libcudart.so
+	/usr/local/zed/lib/libsl_zed.so
+	/usr/lib/x86_64-linux-gnu/libopenblas.so
+    /usr/lib/x86_64-linux-gnu/libusb-1.0.so
+    /usr/lib/x86_64-linux-gnu/libcuda.so)
 
 add_executable(stereo_tum_vi
 Examples/Stereo/stereo_tum_vi.cc)
@@ -164,9 +209,22 @@ add_executable(mono_euroc
 Examples/Monocular/mono_euroc.cc)
 target_link_libraries(mono_euroc ${PROJECT_NAME})
 
+add_executable(mono2
+Examples/Monocular/mono2.cc)
+target_link_libraries(mono2 ${PROJECT_NAME})
+
 add_executable(mono_tum_vi
 Examples/Monocular/mono_tum_vi.cc)
 target_link_libraries(mono_tum_vi ${PROJECT_NAME})
+
+add_executable(simple
+Examples/Monocular/simple.cc)
+target_link_libraries(simple ${PROJECT_NAME}
+/usr/local/cuda/lib64/libcudart.so
+	/usr/local/zed/lib/libsl_zed.so
+	/usr/lib/x86_64-linux-gnu/libopenblas.so
+    /usr/lib/x86_64-linux-gnu/libusb-1.0.so
+    /usr/lib/x86_64-linux-gnu/libcuda.so)
 
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular-Inertial)
@@ -190,5 +248,7 @@ target_link_libraries(stereo_inertial_euroc ${PROJECT_NAME})
 add_executable(stereo_inertial_tum_vi
 Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
 target_link_libraries(stereo_inertial_tum_vi ${PROJECT_NAME})
+
+
 
 
