@@ -170,6 +170,7 @@ int main(int argc, char **argv)
     }
     else
     {
+        cout << "SAVING TRAJECTORY ........" << endl;
         SLAM.SaveTrajectoryEuRoC("CameraTrajectory.txt");
         SLAM.SaveKeyFrameTrajectoryEuRoC("KeyFrameTrajectory.txt");
     }
