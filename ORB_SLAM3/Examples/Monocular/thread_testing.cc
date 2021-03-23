@@ -2,30 +2,40 @@
 #include <thread>         // std::thread
 #include <opencv2/opencv.hpp> 
 
-
 using namespace std;
 
-void foo() 
+cv::Mat foo(cv::Mat E) 
 {
-    cv::Mat E = cv::Mat::eye(4, 4, CV_64F);
-    cout << "E = " << endl << " " << E << endl << endl;
+    // cv::Mat E = cv::Mat::eye(4, 4, CV_64F);
+    E += 1;
+    // cout << "E = " << endl << " " << E << endl << endl;
+    return E;
 }
 
-void bar(int x)
+void bar(int count)
 {
-  cout << "Hello BAR " << x << endl;
+    count += 1;
+    cout << "Hello BAR " << count << endl;
 }
 
 int main() 
 {
-    std::thread first (foo);     // spawn new thread that calls foo()
-    std::thread second (bar,0);  // spawn new thread that calls bar(0)
-    
-    // synchronize threads:
-    first.join();                // pauses until first finishes
-    second.join();               // pauses until second finishes
+    cv::Mat E = cv::Mat::eye(4, 4, CV_64F);
+    int count = 0;
+    while(1)
+    {
+        std::thread first (&foo, E);           // spawn new thread that calls foo()
+        std::thread second (&bar, count);   // spawn new thread that calls bar(0)
+        
+        // synchronize threads:
+        first.join();                         // pauses until first finishes
+        second.join();                        // pauses until second finishes
+        
+        cout << "E = " << endl << " " << E << endl << endl;
 
-    std::cout << "foo and bar completed.\n";
+        E.setTo(0, E > 1000);
+    }
+    
 
     return 0;
 }
