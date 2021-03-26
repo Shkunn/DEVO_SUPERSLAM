@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.8)
-project(ORB_SLAM3)
+cmake_minimum_required(VERSION 3.1.0)
+project(ORB_SLAM3 LANGUAGES CXX C)
 
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
@@ -21,63 +21,22 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 set(OpenCV_DIR /home/teddy/Dev/opencv-3.4.13/build)
 
 
-
 ############### INTEL REALSENSE : LIBREALSENSE ###############
 
-include(CMake/lrs_options.cmake)
-include(CMake/connectivity_check.cmake)
+FIND_PACKAGE(realsense2 CONFIG REQUIRED)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/CMake)
+ADD_EXECUTABLE(pose pose.cpp)
 
-# include librealsense general configuration
-include(CMake/global_config.cmake)
+TARGET_LINK_LIBRARIES(
+    pose
+    realsense2
+)
 
-config_cxx_flags()
-
-# include os specific macros
-# macro definition located at "CMake/global_config.cmake"
-include(CMake/include_os.cmake)
-
-# set os specific configuration flags
-# macro definition located at "CMake/<OS>_config.cmake"
-os_set_flags()
-
-# set global configuration flags
-# macro definition located at "CMake/global_config.cmake"
-global_set_flags()
-
-if(BUILD_SHARED_LIBS)
-    add_library(${LRS_TARGET} SHARED "")
-else()
-    add_library(${LRS_TARGET} STATIC "")
-endif()
-
-# set library version
-set_target_properties(${LRS_TARGET} PROPERTIES VERSION ${REALSENSE_VERSION_STRING} SOVERSION "${REALSENSE_VERSION_MAJOR}.${REALSENSE_VERSION_MINOR}")
-
-include(include/CMakeLists.txt)
-include(src/CMakeLists.txt)
-include(third-party/CMakeLists.txt)
-include(common/utilities/CMakeLists.txt)
-
-# configure the project according to OS specific requirments
-# macro definition located at "CMake/<OS>_config.cmake"
-os_target_config()
-
-# global project configuration
-# macro definition located at "CMake/global_config.cmake"
-global_target_config()
-
-include(CMake/install_config.cmake)
-
-add_subdirectory(wrappers)
-
-if(BUILD_EXAMPLES)
-    add_subdirectory(examples)
-    add_subdirectory(tools)
-endif()
-
-include(CMake/embedd_udev_rules.cmake)
+ADD_EXECUTABLE(test test.cpp)
+TARGET_LINK_LIBRARIES(
+    test
+    realsense2
+)
 
 ##############################################################
 
