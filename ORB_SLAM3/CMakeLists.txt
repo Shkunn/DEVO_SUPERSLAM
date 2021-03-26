@@ -18,8 +18,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 #    SET(X "/home/ROROROOR")
 # ENDIF()
 
-set(OpenCV_DIR /home/teddy/Dev/opencv-3.4.13/build)
-
+set(OpenCV_DIR /home/thomas/Documents/opencv-3.4.13/build)
 
 ############### INTEL REALSENSE : LIBREALSENSE ###############
 
@@ -35,6 +34,7 @@ TARGET_LINK_LIBRARIES(
 
 ADD_EXECUTABLE(test 
 Examples/TEST_CODE/test.cpp)
+
 TARGET_LINK_LIBRARIES(
    test
    realsense2
@@ -179,6 +179,10 @@ target_link_libraries(stereo_euroc ${PROJECT_NAME})
 add_executable(stereo_tum_vi
 Examples/Stereo/stereo_tum_vi.cc)
 target_link_libraries(stereo_tum_vi ${PROJECT_NAME})
+
+add_executable(try_solo
+Examples/Stereo/try_solo.cc)
+target_link_libraries(try_solo realsense2 ${PROJECT_NAME})
 
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular)

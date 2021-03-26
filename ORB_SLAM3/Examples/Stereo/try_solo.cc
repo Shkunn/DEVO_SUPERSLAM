@@ -27,6 +27,8 @@
 #include <cmath>
 #include <iostream>
 
+using namespace cv;
+
 /* -------------------------------------------------------------------------
  * CONSTANTS
  * ------------------------------------------------------------------------- */
@@ -90,6 +92,7 @@ int main(int argc, char *argv[]) {
     cfg.enable_stream(RS2_STREAM_FISHEYE, 2);
     // Start pipeline with chosen configuration
     rs2::pipeline_profile pipe_profile = pipe.start(cfg);
+    auto frames = pipe.wait_for_frames(); 
 
     // T265 has two fisheye sensors, we can choose any of them (index 1 or 2)
     const int fisheye_sensor_LEFT = 1;
@@ -98,7 +101,9 @@ int main(int argc, char *argv[]) {
     // Get fisheye sensor intrinsics parameters
     rs2::stream_profile fisheye_stream_LEFT = pipe_profile.get_stream(RS2_STREAM_FISHEYE, fisheye_sensor_LEFT);
     rs2::stream_profile fisheye_stream_RIGHT = pipe_profile.get_stream(RS2_STREAM_FISHEYE, fisheye_sensor_RIGHT);
-    rs2_intrinsics intrinsics = fisheye_stream.as<rs2::video_stream_profile>().get_intrinsics();
+    rs2_intrinsics intrinsics_LEFT = fisheye_stream_RIGHT.as<rs2::video_stream_profile>().get_intrinsics();
+    rs2_intrinsics intrinsics_RIGHT = fisheye_stream_LEFT.as<rs2::video_stream_profile>().get_intrinsics();
+
 
     std::cout << "Device got. Streaming data" << std::endl;
 
@@ -127,9 +132,9 @@ int main(int argc, char *argv[]) {
         rs2::video_frame fisheye_frame_RIGHT = frames.get_fisheye_frame(fisheye_frame_RIGHT);
 
         // Create OpenCV matrix of size (w,h) from the colorized frames data
-        imLeft = image(Size(w_L, h_L), CV_8UC3, (void*)fisheye_frame_LEFT.get_data(), Mat::AUTO_STEP);
-        imRight = image(Size(w_R, h_R), CV_8UC3, (void*)fisheye_frame_RIGHT.get_data(), Mat::AUTO_STEP);
-
+        cv::Mat imLeft(Size(w_L, h_L), CV_8UC3, (void*)fisheye_frame_LEFT.get_data(), Mat::AUTO_STEP);
+        cv::Mat imRight(Size(w_R, h_R), CV_8UC3, (void*)fisheye_frame_RIGHT.get_data(), Mat::AUTO_STEP);
+        
         // Get the time between the epoch and now, allowing us to get a
         // timestamp (in seconds) to pass into the slam system.
         auto elapsed_time = std::chrono::steady_clock::now() - slam_epoch;

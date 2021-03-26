@@ -6,26 +6,26 @@
 Camera.type: "PinHole"
 
 # Camera calibration and distortion parameters (OpenCV) 
-Camera.fx: 435.2046959714599
-Camera.fy: 435.2046959714599
-Camera.cx: 367.4517211914062
-Camera.cy: 252.2008514404297
+Camera.fx: 286.304595947266
+Camera.fy: 286.273712158203
+Camera.cx: 417.1953125
+Camera.cy: 399.115386962891
 
-Camera.k1: 0.0
-Camera.k2: 0.0
-Camera.p1: 0.0
-Camera.p2: 0.0
+Camera.k1: -0.00604297406971455
+Camera.k2: 0.0451732017099857
+Camera.p1: -0.0425471812486649
+Camera.p2: 0.00776465190574527
 
-Camera.bFishEye: 0
+Camera.bFishEye: 1
 
-Camera.width: 752
-Camera.height: 480
+Camera.width: 848
+Camera.height: 800
 
 # Camera frames per second 
-Camera.fps: 20.0
+Camera.fps: 30.0
 
 # stereo baseline times fx
-Camera.bf: 47.90639384423901
+Camera.bf: 64.0611
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
@@ -37,18 +37,18 @@ ThDepth: 35.0
 # Stereo Rectification. Only if you need to pre-rectify the images.
 # Camera.fx, .fy, etc must be the same as in LEFT.P
 #--------------------------------------------------------------------------------------------
-LEFT.height: 480
-LEFT.width: 752
+LEFT.height: 800
+LEFT.width: 848
 LEFT.D: !!opencv-matrix
    rows: 1
    cols: 5
    dt: d
-   data:[-0.28340811, 0.07395907, 0.00019359, 1.76187114e-05, 0.0]
+   data:[-0.00604297406971455, 0.0451732017099857, -0.0425471812486649, 0.00776465190574527, 0]
 LEFT.K: !!opencv-matrix
    rows: 3
    cols: 3
-   dt: d
-   data: [458.654, 0.0, 367.215, 0.0, 457.296, 248.375, 0.0, 0.0, 1.0]
+   dt: ds
+   data: [286.3045, 0.0, 417.1953, 0.0, 286.2737, 399.1153, 0.0, 0.0, 1.0]
 LEFT.R:  !!opencv-matrix
    rows: 3
    cols: 3
@@ -60,18 +60,18 @@ LEFT.P:  !!opencv-matrix
    dt: d
    data: [435.2046959714599, 0, 367.4517211914062, 0,  0, 435.2046959714599, 252.2008514404297, 0,  0, 0, 1, 0]
 
-RIGHT.height: 480
-RIGHT.width: 752
+RIGHT.height: 800
+RIGHT.width: 848
 RIGHT.D: !!opencv-matrix
    rows: 1
    cols: 5
    dt: d
-   data:[-0.28368365, 0.07451284, -0.00010473, -3.555907e-05, 0.0]
+   data:[-0.00477181980386376, 0.0391876511275768, -0.0359093882143497, 0.00556322885677218, 0]
 RIGHT.K: !!opencv-matrix
    rows: 3
    cols: 3
    dt: d
-   data: [457.587, 0.0, 379.999, 0.0, 456.134, 255.238, 0.0, 0.0, 1]
+   data: [286.6798, 0.0, 422.400, 0.0, 286.5119, 398.7724, 0.0, 0.0, 1]
 RIGHT.R:  !!opencv-matrix
    rows: 3
    cols: 3
