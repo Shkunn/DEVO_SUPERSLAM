@@ -20,28 +20,6 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 
 set(OpenCV_DIR /home/thomas/Documents/opencv-3.4.13/build)
 
-############### INTEL REALSENSE : LIBREALSENSE ###############
-
-FIND_PACKAGE(realsense2 CONFIG REQUIRED)
-
-ADD_EXECUTABLE(pose 
-Examples/TEST_CODE/pose.cpp)
-
-TARGET_LINK_LIBRARIES(
-    pose
-    realsense2
-)
-
-ADD_EXECUTABLE(test 
-Examples/TEST_CODE/test.cpp)
-
-TARGET_LINK_LIBRARIES(
-   test
-   realsense2
-)
-
-##############################################################
-
 
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-deprecated -O3 -march=native ")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated -O3 -march=native")
@@ -160,10 +138,7 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 
 # Build examples
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D)
-add_executable(rgbd_tum
-Examples/RGB-D/rgbd_tum.cc)
-target_link_libraries(rgbd_tum ${PROJECT_NAME})
+#
 
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo)
@@ -234,4 +209,28 @@ add_executable(stereo_inertial_tum_vi
 Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
 target_link_libraries(stereo_inertial_tum_vi ${PROJECT_NAME})
 
+############### INTEL REALSENSE : LIBREALSENSE ###############
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/TEST_CODE)
+
+FIND_PACKAGE(realsense2 CONFIG REQUIRED)
+
+ADD_EXECUTABLE(pose 
+Examples/TEST_CODE/pose.cpp)
+
+TARGET_LINK_LIBRARIES(
+    pose
+    realsense2
+    ${OpenCV_LIBS}
+)
+
+ADD_EXECUTABLE(test 
+Examples/TEST_CODE/test.cpp)
+
+TARGET_LINK_LIBRARIES(
+   test
+   realsense2
+   ${OpenCV_LIBS}
+)
+
+##############################################################

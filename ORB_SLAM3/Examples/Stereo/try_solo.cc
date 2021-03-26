@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     // The last input tells the system to display it's UI.
     ORB_SLAM3::System SLAM(
         "Vocabulary/ORBvoc.txt",
-        "Examples/Stereo/EuRoC.yaml",
+        "Examples/Stereo/EuRoCD435.yaml",
         ORB_SLAM3::System::STEREO, 
         true
     );
@@ -82,59 +82,37 @@ int main(int argc, char *argv[]) {
     auto slam_epoch = std::chrono::steady_clock::now();
 
     // CAMERA.
-    // Declare RealSense pipeline, encapsulating the actual device and sensors
-    rs2::pipeline pipe;
-    // Create a configuration for configuring the pipeline with a non default profile
-    rs2::config cfg;
-    // Add pose stream
-    cfg.enable_stream(RS2_STREAM_POSE, RS2_FORMAT_6DOF);
-    cfg.enable_stream(RS2_STREAM_FISHEYE, 1);
-    cfg.enable_stream(RS2_STREAM_FISHEYE, 2);
+    int width = 1280;
+	int height = 720;
+	int fps = 30;
+	rs2::config config;
+	config.enable_stream(RS2_STREAM_INFRARED, 1, width, height, RS2_FORMAT_Y8, fps);
+	config.enable_stream(RS2_STREAM_INFRARED, 2, width, height, RS2_FORMAT_Y8, fps);
+
+	// start pipeline
+	rs2::pipeline pipeline;
+	rs2::pipeline_profile pipeline_profile = pipeline.start(config);
+    rs2::device select_divise = pipeline_profile.get_device();
+    auto depth_depth = select_divise.first<rs2::depth_sensor>();
+	depth_depth.set_option(RS2_OPTION_EMITTER_ENABLED, 0);   
+
     // Start pipeline with chosen configuration
-    rs2::pipeline_profile pipe_profile = pipe.start(cfg);
-    auto frames = pipe.wait_for_frames(); 
-
-    // T265 has two fisheye sensors, we can choose any of them (index 1 or 2)
-    const int fisheye_sensor_LEFT = 1;
-    const int fisheye_sensor_RIGHT = 2;
-
-    // Get fisheye sensor intrinsics parameters
-    rs2::stream_profile fisheye_stream_LEFT = pipe_profile.get_stream(RS2_STREAM_FISHEYE, fisheye_sensor_LEFT);
-    rs2::stream_profile fisheye_stream_RIGHT = pipe_profile.get_stream(RS2_STREAM_FISHEYE, fisheye_sensor_RIGHT);
-    rs2_intrinsics intrinsics_LEFT = fisheye_stream_RIGHT.as<rs2::video_stream_profile>().get_intrinsics();
-    rs2_intrinsics intrinsics_RIGHT = fisheye_stream_LEFT.as<rs2::video_stream_profile>().get_intrinsics();
-
-
-    std::cout << "Device got. Streaming data" << std::endl;
 
     cv::Mat imLeft; 
     cv::Mat imRight; 
-
-    rs2::video_frame fisheye_frame_LEFT = frames.get_fisheye_frame(fisheye_sensor_LEFT);
-    rs2::video_frame fisheye_frame_RIGHT = frames.get_fisheye_frame(fisheye_frame_RIGHT);
-
-
-    // Query frame size (width and height)
-    const int w_L = fisheye_frame_LEFT.as<rs2::video_frame>().get_width();
-    const int h_L = fisheye_frame_LEFT.as<rs2::video_frame>().get_height();
-
-    const int w_R = fisheye_frame_RIGHT.as<rs2::video_frame>().get_width();
-    const int h_R = fisheye_frame_RIGHT.as<rs2::video_frame>().get_height();
-
 
     // Now for the main loop
     while (1) {
 
         // rs2::frameset frameset = pipe.wait_for_frames();
-        auto frames = pipe.wait_for_frames();
+		rs2::frameset frameset = pipeline.wait_for_frames();
 
-        rs2::video_frame fisheye_frame_LEFT = frames.get_fisheye_frame(fisheye_sensor_LEFT);
-        rs2::video_frame fisheye_frame_RIGHT = frames.get_fisheye_frame(fisheye_frame_RIGHT);
+		rs2::video_frame ir_frame_left = frameset.get_infrared_frame(1);
+		rs2::video_frame ir_frame_right = frameset.get_infrared_frame(2);
 
-        // Create OpenCV matrix of size (w,h) from the colorized frames data
-        cv::Mat imLeft(Size(w_L, h_L), CV_8UC3, (void*)fisheye_frame_LEFT.get_data(), Mat::AUTO_STEP);
-        cv::Mat imRight(Size(w_R, h_R), CV_8UC3, (void*)fisheye_frame_RIGHT.get_data(), Mat::AUTO_STEP);
-        
+        imLeft = cv::Mat(cv::Size(width, height), CV_8UC1, (void*)ir_frame_left.get_data());
+        imRight = cv::Mat(cv::Size(width, height), CV_8UC1, (void*)ir_frame_right.get_data());
+
         // Get the time between the epoch and now, allowing us to get a
         // timestamp (in seconds) to pass into the slam system.
         auto elapsed_time = std::chrono::steady_clock::now() - slam_epoch;
@@ -149,6 +127,7 @@ int main(int argc, char *argv[]) {
             imRight,
             frame_timestamp_s
         );
+        std::cout << "fdp-(3)" << std::endl;
 
         // The output pose may be empty if the system was unable to track the
         // movement, so only get position and rotation if pose isn't empty. We
