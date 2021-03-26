@@ -25,17 +25,19 @@ set(OpenCV_DIR /home/teddy/Dev/opencv-3.4.13/build)
 
 FIND_PACKAGE(realsense2 CONFIG REQUIRED)
 
-ADD_EXECUTABLE(pose pose.cpp)
+ADD_EXECUTABLE(pose 
+Examples/TEST_CODE/pose.cpp)
 
 TARGET_LINK_LIBRARIES(
     pose
     realsense2
 )
 
-ADD_EXECUTABLE(test test.cpp)
+ADD_EXECUTABLE(test 
+Examples/TEST_CODE/test.cpp)
 TARGET_LINK_LIBRARIES(
-    test
-    realsense2
+   test
+   realsense2
 )
 
 ##############################################################
