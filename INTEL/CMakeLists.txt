@@ -1,0 +1,20 @@
+PROJECT(INTEL)
+
+#SET(EXECUTABLE_OUTPUT_PATH ".")
+FIND_PACKAGE(realsense2 CONFIG REQUIRED)
+
+ADD_EXECUTABLE(pose pose.cpp)
+
+#SET(ZED_LIBS /usr/local/zed /usr/local/cuda ${CUDA_CUDART_LIBRARY})
+MESSAGE("fdp" ${EXECUTABLE_OUTPUT_PATH} ${CMAKE_THREAD_LIBS_INIT})
+
+TARGET_LINK_LIBRARIES(
+    pose
+    realsense2
+)
+
+ADD_EXECUTABLE(test test.cpp)
+TARGET_LINK_LIBRARIES(
+    test
+    realsense2
+)
