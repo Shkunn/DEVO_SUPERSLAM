@@ -12,11 +12,75 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 
-IF(TEST)
-   SET(X "/home/TETETE")
-ELSE()
-   SET(X "/home/ROROROOR")
-ENDIF()
+# IF(TEST)
+#    SET(X "/home/TETETE")
+# ELSE()
+#    SET(X "/home/ROROROOR")
+# ENDIF()
+
+set(OpenCV_DIR /home/teddy/Dev/opencv-3.4.13/build)
+
+
+
+############### INTEL REALSENSE : LIBREALSENSE ###############
+
+include(CMake/lrs_options.cmake)
+include(CMake/connectivity_check.cmake)
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/CMake)
+
+# include librealsense general configuration
+include(CMake/global_config.cmake)
+
+config_cxx_flags()
+
+# include os specific macros
+# macro definition located at "CMake/global_config.cmake"
+include(CMake/include_os.cmake)
+
+# set os specific configuration flags
+# macro definition located at "CMake/<OS>_config.cmake"
+os_set_flags()
+
+# set global configuration flags
+# macro definition located at "CMake/global_config.cmake"
+global_set_flags()
+
+if(BUILD_SHARED_LIBS)
+    add_library(${LRS_TARGET} SHARED "")
+else()
+    add_library(${LRS_TARGET} STATIC "")
+endif()
+
+# set library version
+set_target_properties(${LRS_TARGET} PROPERTIES VERSION ${REALSENSE_VERSION_STRING} SOVERSION "${REALSENSE_VERSION_MAJOR}.${REALSENSE_VERSION_MINOR}")
+
+include(include/CMakeLists.txt)
+include(src/CMakeLists.txt)
+include(third-party/CMakeLists.txt)
+include(common/utilities/CMakeLists.txt)
+
+# configure the project according to OS specific requirments
+# macro definition located at "CMake/<OS>_config.cmake"
+os_target_config()
+
+# global project configuration
+# macro definition located at "CMake/global_config.cmake"
+global_target_config()
+
+include(CMake/install_config.cmake)
+
+add_subdirectory(wrappers)
+
+if(BUILD_EXAMPLES)
+    add_subdirectory(examples)
+    add_subdirectory(tools)
+endif()
+
+include(CMake/embedd_udev_rules.cmake)
+
+##############################################################
+
 
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-deprecated -O3 -march=native ")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated -O3 -march=native")
