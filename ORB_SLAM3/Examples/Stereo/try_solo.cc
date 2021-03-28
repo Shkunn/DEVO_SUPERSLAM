@@ -82,8 +82,8 @@ int main(int argc, char *argv[]) {
     auto slam_epoch = std::chrono::steady_clock::now();
 
     // CAMERA.
-    int width = 1280;
-	int height = 720;
+    int width = 640;
+	int height = 480;
 	int fps = 30;
 	rs2::config config;
 	config.enable_stream(RS2_STREAM_INFRARED, 1, width, height, RS2_FORMAT_Y8, fps);
@@ -104,7 +104,6 @@ int main(int argc, char *argv[]) {
     // Now for the main loop
     while (1) {
 
-        // rs2::frameset frameset = pipe.wait_for_frames();
 		rs2::frameset frameset = pipeline.wait_for_frames();
 
 		rs2::video_frame ir_frame_left = frameset.get_infrared_frame(1);
@@ -120,14 +119,14 @@ int main(int argc, char *argv[]) {
 
         std::cout << std::setprecision(4) << frame_timestamp_s << ": ";
 
-        // Pass the images into the SLAM system. This produces a matrix with
+        // Into the SLAM system. This produces a matrix with
         // the pose information of the camera.
         cv::Mat raw_pose = SLAM.TrackStereo(
             imLeft,
             imRight,
-            frame_timestamp_s
+            frame_timestamp_s  // rs2::frameset frameset = pipe.wait_for_frames();
+        // Pass the images i
         );
-        std::cout << "fdp-(3)" << std::endl;
 
         // The output pose may be empty if the system was unable to track the
         // movement, so only get position and rotation if pose isn't empty. We

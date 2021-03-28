@@ -18,7 +18,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 #    SET(X "/home/ROROROOR")
 # ENDIF()
 
-set(OpenCV_DIR /home/thomas/Documents/opencv-3.4.13/build)
+set(OpenCV_DIR /home/teddy/Dev/opencv-3.4.13/build)
 
 
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-deprecated -O3 -march=native ")
