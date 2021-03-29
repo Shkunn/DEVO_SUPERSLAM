@@ -204,10 +204,13 @@ add_executable(stereo_inertial_euroc
 Examples/Stereo-Inertial/stereo_inertial_euroc.cc)
 target_link_libraries(stereo_inertial_euroc ${PROJECT_NAME})
 
-
 add_executable(stereo_inertial_tum_vi
 Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
 target_link_libraries(stereo_inertial_tum_vi ${PROJECT_NAME})
+
+add_executable(try_stiner
+Examples/Stereo-Inertial/try_stiner.cc)
+target_link_libraries(try_stiner realsense2 ${PROJECT_NAME})
 
 ############### INTEL REALSENSE : LIBREALSENSE ###############
 
