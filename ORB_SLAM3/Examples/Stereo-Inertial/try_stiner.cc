@@ -75,9 +75,12 @@ void thread_IMU(rs2::pipeline pipe, vector<ORB_SLAM3::IMU::Point> & vImuMeas, st
         auto millisec_since_epoch = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
 
         mon_mutex.lock();
-        vImuMeas.push_back(ORB_SLAM3::IMU::Point(accel_sample.x, accel_sample.y, accel_sample.z,
+        /*vImuMeas.push_back(ORB_SLAM3::IMU::Point(accel_sample.x, accel_sample.y, accel_sample.z,
                                     gyro_sample.x, gyro_sample.y, gyro_sample.z,
-                                    millisec_since_epoch / 1000000000.0));
+                                    millisec_since_epoch / 1000000000.0));*/
+        vImuMeas.push_back(ORB_SLAM3::IMU::Point(-accel_sample.y, accel_sample.x, accel_sample.z,
+        -gyro_sample.y, gyro_sample.x, gyro_sample.z,
+        millisec_since_epoch / 1000000000.0));
         //std::cout << " TIME " << millisec_since_epoch / 1000000000.0 << std::endl;
         mon_mutex.unlock();
     }
