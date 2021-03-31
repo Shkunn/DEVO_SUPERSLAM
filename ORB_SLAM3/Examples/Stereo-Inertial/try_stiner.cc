@@ -25,7 +25,14 @@
 #include <librealsense2/rsutil.h>
 #include <array>
 #include <cmath>
+#include <ctime>
 #include <iostream>
+#include <mutex>
+#include <sys/time.h>
+using std::chrono::duration_cast;
+using std::chrono::nanoseconds;
+using std::chrono::system_clock;
+
 
 /* -------------------------------------------------------------------------
  * CONSTANTS
@@ -45,17 +52,17 @@ typedef struct _Pose {
     cv::Mat rotation;
 } Pose;
 
+// Global variable.
+vector<ORB_SLAM3::IMU::Point> vImuMeas;
+std::mutex mon_mutex;
 
 void thread_IMU(rs2::pipeline pipe, vector<ORB_SLAM3::IMU::Point> & vImuMeas, std::chrono::_V2::steady_clock::time_point & slam_epoch)
 {
     // Main loop
-    while (true)
+    while (1)
     {
         // Wait for the next set of frames from the camera
         auto frames = pipe.wait_for_frames();
-
-        auto elapsed_time = std::chrono::steady_clock::now() - slam_epoch;
-        double frame_timestamp_s = elapsed_time.count() / 1000000000.0;
         
         rs2::motion_frame accel_frame = frames.first_or_default(RS2_STREAM_ACCEL);
         rs2::motion_frame gyro_frame = frames.first_or_default(RS2_STREAM_GYRO);
@@ -63,9 +70,16 @@ void thread_IMU(rs2::pipeline pipe, vector<ORB_SLAM3::IMU::Point> & vImuMeas, st
         rs2_vector accel_sample = accel_frame.get_motion_data();
         rs2_vector gyro_sample = gyro_frame.get_motion_data();
 
-        vImuMeas.push_back(ORB_SLAM3::IMU::Point(accel_sample.x, accel_sample.y, accel_sample.y,
+        /*auto elapsed_time = std::chrono::steady_clock::now() - 0;*/
+
+        auto millisec_since_epoch = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
+
+        mon_mutex.lock();
+        vImuMeas.push_back(ORB_SLAM3::IMU::Point(accel_sample.x, accel_sample.y, accel_sample.z,
                                     gyro_sample.x, gyro_sample.y, gyro_sample.z,
-                                    frame_timestamp_s));
+                                    millisec_since_epoch / 1000000000.0));
+        //std::cout << " TIME " << millisec_since_epoch / 1000000000.0 << std::endl;
+        mon_mutex.unlock();
     }
 }
 
@@ -101,13 +115,27 @@ void thread_MAIN(rs2::pipeline pipeline,  vector<ORB_SLAM3::IMU::Point> & vImuMe
 
         // Get the time between the epoch and now, allowing us to get a
         // timestamp (in seconds) to pass into the slam system.
+        /*
         auto elapsed_time = std::chrono::steady_clock::now() - slam_epoch;
-        double frame_timestamp_s = elapsed_time.count() / 1000000000.0;
+        */
+        auto millisec_since_epoch = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
 
-        std::cout << std::setprecision(4) << frame_timestamp_s << ": ";
+        double frame_timestamp_s = millisec_since_epoch / 1000000000.0;
+        
+        //std::cout << frame_timestamp_s << ": " << std::endl;
 
         // Into the SLAM system. This produces a matrix with
         // the pose information of the camera.
+
+        /*mon_mutex.lock();
+        std::cout << "DEBUT LECTURE" << std::endl;
+        for (auto &&vector : vImuMeas)
+        {
+            std::cout << vector.a.x << ", " << vector.a.y << ", "<< vector.a.z << ", " << vector.w.x << ", " << vector.w.y << ", "<< vector.w.z << ", " << std::endl;
+        }
+        std::cout << "FIN DE LA LECTURE" << std::endl;*/
+        //std::cout << "IMU SIZE BEFORE SLAM " << vImuMeas.size() << std::endl;
+        mon_mutex.lock();
         cv::Mat raw_pose = SLAM.TrackStereo(
             imLeft,
             imRight,
@@ -117,11 +145,13 @@ void thread_MAIN(rs2::pipeline pipeline,  vector<ORB_SLAM3::IMU::Point> & vImuMe
         );
 
         vImuMeas.clear();
+        mon_mutex.unlock();
 
         // The output pose may be empty if the system was unable to track the
         // movement, so only get position and rotation if pose isn't empty. We
         // also put this info an a localisation fix available flag for later
         // use. 
+        /*
         bool loc_fix_available = !raw_pose.empty();
         if (loc_fix_available) {
             // The pose matrix is a 4x4 extrinsic matrix, with the form:
@@ -141,7 +171,7 @@ void thread_MAIN(rs2::pipeline pipeline,  vector<ORB_SLAM3::IMU::Point> & vImuMe
         else {
             // If we didn't get a pose update log it.
             std::cout << "no pose update" << std::endl;
-        }
+        }*/
 
         cv::imshow("disparity", imLeft);
         if (cv::waitKey(1) == 'q') {
@@ -169,56 +199,41 @@ int main(int argc, char *argv[]) {
         true
     );
 
-    // The time of each frame is required for SLAM, so we take an epoch time
-    // (i.e. our start time) now
-    std::chrono::_V2::steady_clock::time_point slam_epoch = std::chrono::steady_clock::now();
+    //vector<ORB_SLAM3::IMU::Point> vImuMeas;
 
-    rs2::context                          ctx;        // Create librealsense context for managing devices
-    std::map<std::string, rs2::colorizer> colorizers; // Declare map from device serial number to colorizer (utility class to convert depth data RGB colorspace)
-    std::vector<rs2::pipeline>            pipelines;
+    // Debut du SLAM.
+	std::chrono::_V2::steady_clock::time_point slam_epoch = std::chrono::steady_clock::now();
+	
+	// CAMERA D435
+    int width = 640;
+	int height = 480;
+	int fps = 30;
+	rs2::config config_d435;
+	std::string serial_number_d435 = "909512070031";
+	config_d435.enable_device(serial_number_d435); // Serial number of d435.
+	config_d435.enable_stream(RS2_STREAM_INFRARED, 1, width, height, RS2_FORMAT_Y8, fps);
+	config_d435.enable_stream(RS2_STREAM_INFRARED, 2, width, height, RS2_FORMAT_Y8, fps);
+    rs2::pipeline pipe_d435;
 
-    // Capture serial numbers before opening streaming
-    std::vector<std::string>              serials;
-    for (auto&& dev : ctx.query_devices())
-        serials.push_back(dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER));
+	rs2::pipeline_profile pipeline_profile = pipe_d435.start(config_d435);
+    rs2::device select_divise = pipeline_profile.get_device();
+    auto depth_depth = select_divise.first<rs2::depth_sensor>();
+	depth_depth.set_option(RS2_OPTION_EMITTER_ENABLED, 0);   
 
-    // Start a streaming pipe per each connected device
-    for (auto&& serial : serials)
-    {
-        rs2::pipeline pipe(ctx);
-        rs2::config cfg;
-        cfg.enable_device(serial);
-        pipe.start(cfg);
-        pipelines.emplace_back(pipe);
-        // Map from each device's serial number to a different colorizer
-        colorizers[serial] = rs2::colorizer();
-    }
-
-    vector<ORB_SLAM3::IMU::Point> vImuMeas;
-
-    std::thread thread1;
-    std::thread thread2;
-
-    for (auto &&pipe : pipelines) // loop over pipelines
-    {
-        // Wait for the next set of frames from the camera
-        auto frames = pipe.wait_for_frames();
-
-        auto color = frames.get_color_frame();
-
-        // For cameras that don't have RGB sensor, we'll map the pointcloud to infrared instead of color
-        if (!color) {
-            auto thread1 = std::thread(&thread_IMU, pipe, std::ref(vImuMeas), std::ref(slam_epoch));
-        }
-
-        // For cameras that don't have RGB sensor, we'll map the pointcloud to infrared instead of color
-        if (color) {
-            auto thread2 = std::thread(&thread_MAIN, pipe, std::ref(vImuMeas), std::ref(slam_epoch), std::ref(SLAM));
-        }
-    }
-
-    // CREATE THREAD
-    thread1.join();
+	// CAMERA T265
+	rs2::config config_t265;
+	std::string serial_number_t265 = "925122110153";
+	config_t265.enable_device(serial_number_t265); // Serial number of t265.
+	config_t265.enable_stream(RS2_STREAM_GYRO);
+    config_t265.enable_stream(RS2_STREAM_ACCEL);
+	rs2::pipeline pipe_t265;
+	pipe_t265.start(config_t265);
+	
+	// RUN THREAD.
+	auto thread1 = std::thread(&thread_IMU, std::ref(pipe_t265),  std::ref(vImuMeas), std::ref(slam_epoch));
+	auto thread2 = std::thread(&thread_MAIN, std::ref(pipe_d435), std::ref(vImuMeas), std::ref(slam_epoch), std::ref(SLAM));
+	
+	thread1.join();
     thread2.join();
 
     return 0;

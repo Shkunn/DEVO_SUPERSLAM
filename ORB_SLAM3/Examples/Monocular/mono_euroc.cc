@@ -65,7 +65,6 @@ int main(int argc, char **argv)
     {
         cout << "Loading images for sequence " << seq << "...";
         LoadImages(string(argv[(2*seq)+3]) + "/mav0/cam0/data", string(argv[(2*seq)+4]), vstrImageFilenames[seq], vTimestampsCam[seq]);
-        cout << "LOADED!" << endl;
 
         nImages[seq] = vstrImageFilenames[seq].size();
         tot_images += nImages[seq];
@@ -93,6 +92,7 @@ int main(int argc, char **argv)
             // Read image from file
             im = cv::imread(vstrImageFilenames[seq][ni],CV_LOAD_IMAGE_UNCHANGED);
             double tframe = vTimestampsCam[seq][ni];
+            cout << tframe << endl;
 
             if(im.empty())
             {
