@@ -25,12 +25,15 @@ int main(int argc, char * argv[]) try
             rs2_vector accel_sample = accel_frame.get_motion_data();
             std::cout << "Accel:" << accel_sample.x << ", " << accel_sample.y << ", " << accel_sample.z << std::endl;
             //...
+            std::cout << "Timestamp: " << accel_frame.get_timestamp() << std::endl;
         }
         if (rs2::motion_frame gyro_frame = frameset.first_or_default(RS2_STREAM_GYRO))
         {
             rs2_vector gyro_sample = gyro_frame.get_motion_data();
             std::cout << "Gyro:" << gyro_sample.x << ", " << gyro_sample.y << ", " << gyro_sample.z << std::endl;
             //...
+            std::cout << "Timestamp: " << gyro_frame.get_timestamp() << std::endl;
+
         }
         if (rs2::pose_frame pose_frame = frameset.first_or_default(RS2_STREAM_POSE))
         {

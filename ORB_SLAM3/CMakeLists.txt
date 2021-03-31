@@ -212,6 +212,10 @@ add_executable(try_stiner
 Examples/Stereo-Inertial/try_stiner.cc)
 target_link_libraries(try_stiner realsense2 ${PROJECT_NAME})
 
+add_executable(imu
+Examples/Stereo-Inertial/imu.cpp)
+target_link_libraries(imu realsense2 ${PROJECT_NAME})
+
 ############### INTEL REALSENSE : LIBREALSENSE ###############
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/TEST_CODE)
