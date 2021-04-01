@@ -31,7 +31,96 @@
 #include "ImuTypes.h"
 #include "Optimizer.h"
 
+/* NEW */
+#include <librealsense2/rs.hpp>
+#include <iomanip>
+#include <librealsense2/rsutil.h>
+#include <array>
+#include <cmath>
+#include <ctime>
+#include <iostream>
+#include <mutex>
+#include <sys/time.h>
+using std::chrono::duration_cast;
+using std::chrono::nanoseconds;
+using std::chrono::system_clock;
+#include <thread>
+#include <mutex>
+#include <sl/Camera.hpp>
+#include <typeinfo>
+
 using namespace std;
+
+// GLOBAL VARIABLE.
+std::mutex mon_mutex;
+//vector<ORB_SLAM3::IMU::Point> vImuMeas;
+
+// NEW IMU THREAD.
+struct TimestampHandler {
+
+    // Compare the new timestamp to the last valid one. If it is higher, save it as new reference.
+    inline bool isNew(sl::Timestamp& ts_curr, sl::Timestamp& ts_ref) {
+        bool new_ = ts_curr > ts_ref;
+        if (new_) ts_ref = ts_curr;
+        return new_;
+    }
+    // Specific function for IMUData.
+    inline bool isNew(sl::SensorsData::IMUData& imu_data) {
+        return isNew(imu_data.timestamp, ts_imu);
+    }
+    // Specific function for MagnetometerData.
+    inline bool isNew(sl::SensorsData::MagnetometerData& mag_data) {
+        return isNew(mag_data.timestamp, ts_mag);
+    }
+    // Specific function for BarometerData.
+    inline bool isNew(sl::SensorsData::BarometerData& baro_data) {
+        return isNew(baro_data.timestamp, ts_baro);
+    }
+
+    sl::Timestamp ts_imu = 0, ts_baro = 0, ts_mag = 0; // Initial values
+};
+
+void thread_IMU(vector<ORB_SLAM3::IMU::Point> & vImuMeas)
+{
+    // CAMERA.
+    sl::Camera zed;
+    sl::InitParameters init_parameters;
+    init_parameters.sdk_verbose = true;
+    init_parameters.camera_resolution= sl::RESOLUTION::HD720;
+    init_parameters.depth_mode = sl::DEPTH_MODE::NONE; 
+    init_parameters.coordinate_system = sl::COORDINATE_SYSTEM::IMAGE;
+
+    zed.open(init_parameters); 
+    sl::SensorsData sensors_data;
+    sl::SensorsData::IMUData imu_data;
+    TimestampHandler ts;
+
+    while(1)
+    {
+        while((zed.getSensorsData(sensors_data, sl::TIME_REFERENCE::CURRENT) == sl::ERROR_CODE::SUCCESS) && ts.isNew(sensors_data.imu))
+        {
+            double millisec_since_epoch = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count() / 1000000000.0;
+
+            //std::cout << sensors_data.imu.linear_acceleration << " " << sensors_data.imu.effective_rate << std::endl;
+            //std::cout << "IMU NEW DATA ";
+            //std::cout << std::setprecision(4) << frame_timestamp_s << ": ";
+
+            /*vImuMeas.push_back(ORB_SLAM3::IMU::Point(sensors_data.imu.linear_acceleration[1],-sensors_data.imu.linear_acceleration[0],sensors_data.imu.linear_acceleration[2],
+                                        sensors_data.imu.angular_velocity[1],-sensors_data.imu.angular_velocity[0],sensors_data.imu.angular_velocity[2],
+                                        millisec_since_epoch));*/
+            mon_mutex.lock();
+            std::cout << sensors_data.imu.linear_acceleration[0] << ", " << sensors_data.imu.linear_acceleration[1] << ", " << sensors_data.imu.linear_acceleration[2] << ", " <<
+                        sensors_data.imu.angular_velocity[0] << ", " << sensors_data.imu.angular_velocity[1] << ", " << sensors_data.imu.angular_velocity[2] << std::endl;
+
+            vImuMeas.push_back(ORB_SLAM3::IMU::Point(sensors_data.imu.linear_acceleration[0],sensors_data.imu.linear_acceleration[1],sensors_data.imu.linear_acceleration[2],
+                                        sensors_data.imu.angular_velocity[0],sensors_data.imu.angular_velocity[1],sensors_data.imu.angular_velocity[2],
+                                        millisec_since_epoch));
+            mon_mutex.unlock();
+            //std::cout << "time imu " << millisec_since_epoch << std::endl;
+            //std::cout << "TYPE > " << typeid(vImuMeas[0]).name() << std::endl;
+        }
+    }
+}
 
 void LoadImages(const string &strPathLeft, const string &strPathRight, const string &strPathTimes,
                 vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps);
@@ -78,6 +167,7 @@ int main(int argc, char **argv)
     nImu.resize(num_seq);
 
     int tot_images = 0;
+    std::cout << "salut2";
     for (seq = 0; seq<num_seq; seq++)
     {
         cout << "Loading images for sequence " << seq << "...";
@@ -88,13 +178,14 @@ int main(int argc, char **argv)
         string pathCam0 = pathSeq + "/mav0/cam0/data";
         string pathCam1 = pathSeq + "/mav0/cam1/data";
         string pathImu = pathSeq + "/mav0/imu0/data.csv";
-
+        std::cout << "salut4";
         LoadImages(pathCam0, pathCam1, pathTimeStamps, vstrImageLeft[seq], vstrImageRight[seq], vTimestampsCam[seq]);
         cout << "LOADED!" << endl;
-
+        std::cout << "salut8";
         cout << "Loading IMU for sequence " << seq << "...";
         LoadIMU(pathImu, vTimestampsImu[seq], vAcc[seq], vGyro[seq]);
         cout << "LOADED!" << endl;
+        std::cout << "salut9";
 
         nImages[seq] = vstrImageLeft[seq].size();
         tot_images += nImages[seq];
@@ -112,7 +203,7 @@ int main(int argc, char **argv)
             first_imu[seq]++;
         first_imu[seq]--; // first imu measurement to be considered
     }
-
+    std::cout << "salut";
     // Read rectification parameters
     cv::FileStorage fsSettings(argv[2], cv::FileStorage::READ);
     if(!fsSettings.isOpened())
@@ -161,19 +252,47 @@ int main(int argc, char **argv)
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_STEREO, true);
 
+    // INTEL TEST
+    // CAMERA D435
+    int width = 640;
+	int height = 480;
+	int fps = 30;
+	rs2::config config_d435;
+	std::string serial_number_d435 = "909512070031";
+	config_d435.enable_device(serial_number_d435); // Serial number of d435.
+	config_d435.enable_stream(RS2_STREAM_INFRARED, 1, width, height, RS2_FORMAT_Y8, fps);
+	config_d435.enable_stream(RS2_STREAM_INFRARED, 2, width, height, RS2_FORMAT_Y8, fps);
+    rs2::pipeline pipe_d435;
+	rs2::pipeline_profile pipeline_profile = pipe_d435.start(config_d435);
+    rs2::device select_divise = pipeline_profile.get_device();
+    auto depth_depth = select_divise.first<rs2::depth_sensor>();
+	depth_depth.set_option(RS2_OPTION_EMITTER_ENABLED, 0); 
+
+    vector<ORB_SLAM3::IMU::Point> vImuMeas;
+    auto thread1 = std::thread(&thread_IMU, std::ref(vImuMeas));	
+	//thread1.join();
+    //std::cout << "YOOOOOO MEC"
+
+    //TEST INSANE.
+    // CAMERA.
+
     cv::Mat imLeft, imRight, imLeftRect, imRightRect;
     for (seq = 0; seq<num_seq; seq++)
     {
         // Seq loop
-        vector<ORB_SLAM3::IMU::Point> vImuMeas;
+        
         double t_rect = 0;
         int num_rect = 0;
         int proccIm = 0;
         for(int ni=0; ni<nImages[seq]; ni++, proccIm++)
         {
+            rs2::frameset frameset = pipe_d435.wait_for_frames();
+		    rs2::video_frame ir_frame_left = frameset.get_infrared_frame(1);
+		    rs2::video_frame ir_frame_right = frameset.get_infrared_frame(2);
+
             // Read left and right images from file
-            imLeft = cv::imread(vstrImageLeft[seq][ni],cv::IMREAD_UNCHANGED);
-            imRight = cv::imread(vstrImageRight[seq][ni],cv::IMREAD_UNCHANGED);
+            imLeft = cv::Mat(cv::Size(width, height), CV_8UC1, (void*)ir_frame_left.get_data());
+            imRight = cv::Mat(cv::Size(width, height), CV_8UC1, (void*)ir_frame_right.get_data());
 
             if(imLeft.empty())
             {
@@ -205,10 +324,8 @@ int main(int argc, char **argv)
     #endif
 
             t_rect = std::chrono::duration_cast<std::chrono::duration<double> >(t_End_Rect - t_Start_Rect).count();
-            double tframe = vTimestampsCam[seq][ni];
-
             // Load imu measurements from previous frame
-            vImuMeas.clear();
+            /*vImuMeas.clear();
 
             if(ni>0)
                 while(vTimestampsImu[seq][first_imu[seq]]<=vTimestampsCam[seq][ni]) // while(vTimestampsImu[first_imu]<=vTimestampsCam[ni])
@@ -222,7 +339,7 @@ int main(int argc, char **argv)
                                                              vTimestampsImu[seq][first_imu[seq]] << std::endl;
                     first_imu[seq]++;
                 }
-            std::cout << std::endl;
+            std::cout << std::endl;*/
 
     #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
@@ -231,8 +348,25 @@ int main(int argc, char **argv)
     #endif
 
             // Pass the images to the SLAM system
-            cv::imshow("imagee", imLeftRect);
-            SLAM.TrackStereo(imLeftRect,imRightRect,tframe,vImuMeas);
+            mon_mutex.lock();
+            double millisec_since_epoch;
+            //std::cout << vImuMeas.size() << std::endl;
+            if(vImuMeas.size() > 0)
+            {
+                millisec_since_epoch = vImuMeas[vImuMeas.size()-1].t;
+            }
+            else{
+                millisec_since_epoch = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count() / 1000000000.0;
+            } 
+            for(auto vector :vImuMeas)
+            {
+                std::cout << vector.a.x << ", " << vector.a.y << ", " << vector.a.z << ", " << vector.w.x << ", " << vector.w.y << ", " << vector.w.z << std::endl;
+            }
+            //std::cout << "time cam " << millisec_since_epoch << std::endl;
+            SLAM.TrackStereo(imLeft, imRight, millisec_since_epoch, vImuMeas);
+            vImuMeas.clear();
+            //NEW
+            mon_mutex.unlock();
 
     #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -247,9 +381,9 @@ int main(int argc, char **argv)
             // Wait to load the next frame
             double T=0;
             if(ni<nImages[seq]-1)
-                T = vTimestampsCam[seq][ni+1]-tframe;
+                T = vTimestampsCam[seq][ni+1]-millisec_since_epoch;
             else if(ni>0)
-                T = tframe-vTimestampsCam[seq][ni-1];
+                T = millisec_since_epoch-vTimestampsCam[seq][ni-1];
 
             if(ttrack<T)
                 usleep((T-ttrack)*1e6); // 1e6

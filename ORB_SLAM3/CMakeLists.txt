@@ -12,8 +12,20 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 
+# IF(TEST)
+#    SET(X "/home/TETETE")
+# ELSE()
+#    SET(X "/home/ROROROOR")
+# ENDIF()
+
+#set(OpenCV_DIR /home/teddy/Dev/opencv-3.4.13/build)
+set(OpenCV_DIR /home/thomas/Documents/opencv-3.4.13/build)
+
+
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-deprecated -O3 -march=native ")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated -O3 -march=native")
+
+set(OpenCV_DIR /home/thomas/Documents/opencv-3.4.13/build)
 
 # Check C++11 or C++0x support
 include(CheckCXXCompilerFlag)
@@ -53,7 +65,13 @@ ${PROJECT_SOURCE_DIR}/include
 ${PROJECT_SOURCE_DIR}/include/CameraModels
 ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
+${CUDA_INCLUDE_DIRS}
+${ZED_INCLUDE_DIRS}
 )
+
+
+link_directories(${ZED_LIBRARY_DIR})
+link_directories(${CUDA_LIBRARY_DIRS})
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
@@ -127,6 +145,25 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 )
 
 
+############### INTEL REALSENSE : LIBREALSENSE ###############
+
+
+#####
+find_package(ZED 3 REQUIRED)
+find_package(CUDA 11.1 EXACT REQUIRED)
+
+include_directories(/usr/local/zed/include)
+include_directories(/usr/local/cuda/include)
+
+link_directories(/usr/local/zed/lib)
+link_directories(/usr/local/cuda/lib)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/TEST_CODE)
+
+FIND_PACKAGE(realsense2 CONFIG REQUIRED)
+
+##############################################################
+
 # Build examples
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D)
@@ -164,9 +201,17 @@ add_executable(mono_euroc
 Examples/Monocular/mono_euroc.cc)
 target_link_libraries(mono_euroc ${PROJECT_NAME})
 
+add_executable(mono2
+Examples/Monocular/mono2.cc)
+target_link_libraries(mono2 ${PROJECT_NAME})
+
 add_executable(mono_tum_vi
 Examples/Monocular/mono_tum_vi.cc)
 target_link_libraries(mono_tum_vi ${PROJECT_NAME})
+
+add_executable(thread_testing
+Examples/Monocular/thread_testing.cc)
+target_link_libraries(thread_testing ${PROJECT_NAME})
 
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular-Inertial)
@@ -184,11 +229,18 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo-Inertia
 
 add_executable(stereo_inertial_euroc
 Examples/Stereo-Inertial/stereo_inertial_euroc.cc)
-target_link_libraries(stereo_inertial_euroc ${PROJECT_NAME})
+target_link_libraries(stereo_inertial_euroc realsense2 ${PROJECT_NAME})
 
+add_executable(the_last
+Examples/Stereo-Inertial/the_last.cc)
+target_link_libraries(the_last realsense2 /usr/local/cuda/lib64/libcudart.so
+/usr/local/zed/lib/libsl_zed.so
+/usr/lib/x86_64-linux-gnu/libopenblas.so
+ /usr/lib/x86_64-linux-gnu/libusb-1.0.so
+ /usr/lib/x86_64-linux-gnu/libcuda.so
+ ${PROJECT_NAME})
 
 add_executable(stereo_inertial_tum_vi
 Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
 target_link_libraries(stereo_inertial_tum_vi ${PROJECT_NAME})
-
 
