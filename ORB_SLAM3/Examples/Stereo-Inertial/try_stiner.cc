@@ -29,6 +29,7 @@
 #include <iostream>
 #include <mutex>
 #include <sys/time.h>
+
 using std::chrono::duration_cast;
 using std::chrono::nanoseconds;
 using std::chrono::system_clock;
@@ -55,8 +56,10 @@ typedef struct _Pose {
 // Global variable.
 vector<ORB_SLAM3::IMU::Point> vImuMeas;
 std::mutex mon_mutex;
+// rs2_vector accel_temp;
 
-void thread_IMU(rs2::pipeline pipe, vector<ORB_SLAM3::IMU::Point> & vImuMeas, std::chrono::_V2::steady_clock::time_point & slam_epoch)
+
+void thread_IMU(rs2::pipeline pipe, vector<ORB_SLAM3::IMU::Point> & vImuMeas)
 {
     // Main loop
     while (1)
@@ -70,24 +73,42 @@ void thread_IMU(rs2::pipeline pipe, vector<ORB_SLAM3::IMU::Point> & vImuMeas, st
         rs2_vector accel_sample = accel_frame.get_motion_data();
         rs2_vector gyro_sample = gyro_frame.get_motion_data();
 
-        /*auto elapsed_time = std::chrono::steady_clock::now() - 0;*/
+        // auto elapsed_time = std::chrono::steady_clock::now() - 0;
 
         auto millisec_since_epoch = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
+        double frame_timestamp_s = millisec_since_epoch / 1000000000.0;
 
         mon_mutex.lock();
-        /*vImuMeas.push_back(ORB_SLAM3::IMU::Point(accel_sample.x, accel_sample.y, accel_sample.z,
-                                    gyro_sample.x, gyro_sample.y, gyro_sample.z,
-                                    millisec_since_epoch / 1000000000.0));*/
-        vImuMeas.push_back(ORB_SLAM3::IMU::Point(-accel_sample.y, accel_sample.x, accel_sample.z,
-        -gyro_sample.y, gyro_sample.x, gyro_sample.z,
-        millisec_since_epoch / 1000000000.0));
-        //std::cout << " TIME " << millisec_since_epoch / 1000000000.0 << std::endl;
+        vImuMeas.push_back(ORB_SLAM3::IMU::Point(accel_sample.x, accel_sample.y, accel_sample.z,
+                                                gyro_sample.x, gyro_sample.y, gyro_sample.z,
+                                                frame_timestamp_s));
         mon_mutex.unlock();
+        
+        // if (accel_temp.x != accel_sample.x && accel_temp.y != accel_sample.y && accel_temp.z != accel_sample.z)
+        // {
+        // //     std::cout << " ACCEL " << accel_sample.x << " - " << accel_sample.y << " - " << accel_sample.z << std::endl <<
+        // //             " GYRO " << gyro_sample.x << " - " << gyro_sample.y << " - " << gyro_sample.z << " - " << std::endl <<
+        // //             " TIMESTAMPS " << millisec_since_epoch << std::endl << std::endl;
+
+        //     accel_temp = accel_sample;
+
+        //     mon_mutex.lock();
+        //     /*vImuMeas.push_back(ORB_SLAM3::IMU::Point(accel_sample.x, accel_sample.y, accel_sample.z,
+        //                                 gyro_sample.x, gyro_sample.y, gyro_sample.z,
+        //                                 millisec_since_epoch / 1000000000.0));*/
+        //     vImuMeas.push_back(ORB_SLAM3::IMU::Point(-accel_sample.y, accel_sample.x, accel_sample.z,
+        //     -gyro_sample.y, gyro_sample.x, gyro_sample.z,
+        //     millisec_since_epoch / 1000000000.0));
+        //     //std::cout << " TIME " << millisec_since_epoch / 1000000000.0 << std::endl;
+        //     mon_mutex.unlock();
+
+        //     compteur ++;
+        // }
     }
 }
 
 
-void thread_MAIN(rs2::pipeline pipeline,  vector<ORB_SLAM3::IMU::Point> & vImuMeas, std::chrono::_V2::steady_clock::time_point & slam_epoch, ORB_SLAM3::System & SLAM)
+void thread_MAIN(rs2::pipeline pipeline, vector<ORB_SLAM3::IMU::Point> & vImuMeas, ORB_SLAM3::System & SLAM)
 {
     cv::Mat R1, R2, P1, P2, Q;
     // We also want somewhere to store our pose data
@@ -98,11 +119,6 @@ void thread_MAIN(rs2::pipeline pipeline,  vector<ORB_SLAM3::IMU::Point> & vImuMe
 
     int width = 640;
     int height = 480;
-
-    // rs2::pipeline_profile pipeline_profile = pipeline.start(config);
-    // rs2::device select_divise = pipeline_profile.get_device();
-    // auto depth_depth = select_divise.first<rs2::depth_sensor>();
-	// depth_depth.set_option(RS2_OPTION_EMITTER_ENABLED, 0);
 
     while (1) {
         // Read the output frames from the OAK-D. These are blocking calls, so
@@ -118,9 +134,9 @@ void thread_MAIN(rs2::pipeline pipeline,  vector<ORB_SLAM3::IMU::Point> & vImuMe
 
         // Get the time between the epoch and now, allowing us to get a
         // timestamp (in seconds) to pass into the slam system.
-        /*
-        auto elapsed_time = std::chrono::steady_clock::now() - slam_epoch;
-        */
+        
+        // auto elapsed_time = std::chrono::steady_clock::now() - slam_epoch;
+        
         auto millisec_since_epoch = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
 
         double frame_timestamp_s = millisec_since_epoch / 1000000000.0;
@@ -130,56 +146,47 @@ void thread_MAIN(rs2::pipeline pipeline,  vector<ORB_SLAM3::IMU::Point> & vImuMe
         // Into the SLAM system. This produces a matrix with
         // the pose information of the camera.
 
-        /*mon_mutex.lock();
-        std::cout << "DEBUT LECTURE" << std::endl;
-        for (auto &&vector : vImuMeas)
-        {
-            std::cout << vector.a.x << ", " << vector.a.y << ", "<< vector.a.z << ", " << vector.w.x << ", " << vector.w.y << ", "<< vector.w.z << ", " << std::endl;
-        }
-        std::cout << "FIN DE LA LECTURE" << std::endl;*/
-        //std::cout << "IMU SIZE BEFORE SLAM " << vImuMeas.size() << std::endl;
+        // mon_mutex.lock();
+        // std::cout << "DEBUT LECTURE" << std::endl;
+        // for (auto &&vector : vImuMeas)
+        // {
+        //     std::cout << vector.a.x << ", " << vector.a.y << ", "<< vector.a.z << ", " << vector.w.x << ", " << vector.w.y << ", "<< vector.w.z << ", " << std::endl;
+        // }
+        // std::cout << "FIN DE LA LECTURE" << std::endl;
+        // std::cout << "IMU SIZE BEFORE SLAM " << vImuMeas.size() << std::endl;
+        
+        
+        // if (compteur > 9)
+        // {
+        //     mon_mutex.lock();
+        //     cv::Mat raw_pose = SLAM.TrackStereo(
+        //         imLeft,
+        //         imRight,
+        //         frame_timestamp_s,  // rs2::frameset frameset = pipe.wait_for_frames();
+        //         vImuMeas
+        //     // Pass the images i
+        //     );
+
+        //     vImuMeas.clear();
+        //     compteur = 0;
+        //     mon_mutex.unlock();
+        // }
+
         mon_mutex.lock();
         cv::Mat raw_pose = SLAM.TrackStereo(
             imLeft,
             imRight,
             frame_timestamp_s,  // rs2::frameset frameset = pipe.wait_for_frames();
             vImuMeas
-        // Pass the images i
         );
-
         vImuMeas.clear();
         mon_mutex.unlock();
-
-        // The output pose may be empty if the system was unable to track the
-        // movement, so only get position and rotation if pose isn't empty. We
-        // also put this info an a localisation fix available flag for later
-        // use. 
-        /*
-        bool loc_fix_available = !raw_pose.empty();
-        if (loc_fix_available) {
-            // The pose matrix is a 4x4 extrinsic matrix, with the form:
-            // [R_3x3 T_3x1; [0 0 0 1]], we can find the camera position with 
-            // C = -R'T (R' = R transpose).
-            pose.rotation = raw_pose(cv::Rect(0, 0, 3, 3));
-            cv::Mat T = raw_pose(cv::Rect(3, 0, 1, 3));
-            pose.position = -pose.rotation.t()*T;
-
-            // Print the updated position, but transpose it so that instead of
-            // a column vector we have a row vector, which is easier to read.
-            std::cout << 
-                "position: " << 
-                pose.position.t() << 
-                std::endl;
-        }
-        else {
-            // If we didn't get a pose update log it.
-            std::cout << "no pose update" << std::endl;
-        }*/
 
         cv::imshow("disparity", imLeft);
         if (cv::waitKey(1) == 'q') {
             break;
         }
+        std::cout << std::endl;
     }
 
     // Stop all SLAM threads
@@ -205,7 +212,7 @@ int main(int argc, char *argv[]) {
     //vector<ORB_SLAM3::IMU::Point> vImuMeas;
 
     // Debut du SLAM.
-	std::chrono::_V2::steady_clock::time_point slam_epoch = std::chrono::steady_clock::now();
+	// std::chrono::_V2::steady_clock::time_point slam_epoch = std::chrono::steady_clock::now();
 	
 	// CAMERA D435
     int width = 640;
@@ -231,10 +238,11 @@ int main(int argc, char *argv[]) {
     config_t265.enable_stream(RS2_STREAM_ACCEL);
 	rs2::pipeline pipe_t265;
 	pipe_t265.start(config_t265);
+    // int compteur = 0;
 	
 	// RUN THREAD.
-	auto thread1 = std::thread(&thread_IMU, std::ref(pipe_t265),  std::ref(vImuMeas), std::ref(slam_epoch));
-	auto thread2 = std::thread(&thread_MAIN, std::ref(pipe_d435), std::ref(vImuMeas), std::ref(slam_epoch), std::ref(SLAM));
+	auto thread1 = std::thread(&thread_IMU,  std::ref(pipe_t265), std::ref(vImuMeas)); //, std::ref(slam_epoch)); //, std::ref(compteur));
+	auto thread2 = std::thread(&thread_MAIN, std::ref(pipe_d435), std::ref(vImuMeas), std::ref(SLAM)); //, std::ref(slam_epoch), std::ref(SLAM)); //, std::ref(compteur));
 	
 	thread1.join();
     thread2.join();

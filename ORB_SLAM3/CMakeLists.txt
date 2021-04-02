@@ -18,8 +18,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 #    SET(X "/home/ROROROOR")
 # ENDIF()
 
-#set(OpenCV_DIR /home/teddy/Dev/opencv-3.4.13/build)
-set(OpenCV_DIR /home/thomas/Documents/opencv-3.4.13/build)
+set(OpenCV_DIR /home/teddy/Dev/opencv-3.4.13/build)
+# set(OpenCV_DIR /home/thomas/Documents/opencv-3.4.13/build)
 
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-deprecated -O3 -march=native ")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated -O3 -march=native")
@@ -215,6 +215,10 @@ target_link_libraries(try_stiner realsense2 ${PROJECT_NAME})
 add_executable(imu
 Examples/Stereo-Inertial/imu.cpp)
 target_link_libraries(imu realsense2 ${PROJECT_NAME})
+
+add_executable(INTEL_SLAM
+Examples/Stereo-Inertial/INTEL_SLAM.cpp)
+target_link_libraries(INTEL_SLAM realsense2 ${PROJECT_NAME})
 
 ############### INTEL REALSENSE : LIBREALSENSE ###############
 
