@@ -220,6 +220,10 @@ add_executable(INTEL_SLAM
 Examples/Stereo-Inertial/INTEL_SLAM.cpp)
 target_link_libraries(INTEL_SLAM realsense2 ${PROJECT_NAME})
 
+add_executable(INTEL_SLAM_POSE
+Examples/Stereo-Inertial/INTEL_SLAM_POSE.cpp)
+target_link_libraries(INTEL_SLAM_POSE realsense2 ${PROJECT_NAME})
+
 ############### INTEL REALSENSE : LIBREALSENSE ###############
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/TEST_CODE)
