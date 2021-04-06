@@ -104,26 +104,40 @@ int main(int argc, char * argv[])
     cv::initUndistortRectifyMap(K_l,D_l,R_l,P_l.rowRange(0,3).colRange(0,3),cv::Size(cols_l,rows_l),CV_32F,M1l,M2l);
     cv::initUndistortRectifyMap(K_r,D_r,R_r,P_r.rowRange(0,3).colRange(0,3),cv::Size(cols_r,rows_r),CV_32F,M1r,M2r);
 
+    rs2::frameset frames_T265 = pipe_t265.wait_for_frames();
+    rs2::motion_frame accel_frame = frames_T265.first(RS2_STREAM_ACCEL);
+    rs2::motion_frame gyro_frame = frames_T265.first(RS2_STREAM_GYRO);
+    rs2_vector accel_sample = accel_frame.get_motion_data();;
+    rs2_vector gyro_sample = gyro_frame.get_motion_data();
 
     while (1)
     {
         while (counter < 10)
         {
-            rs2::frameset frames_T265 = pipe_t265.wait_for_frames();
-            rs2::motion_frame accel_frame = frames_T265.first_or_default(RS2_STREAM_ACCEL);
-            rs2::motion_frame gyro_frame = frames_T265.first_or_default(RS2_STREAM_GYRO);
+            frames_T265 = pipe_t265.wait_for_frames();
+            accel_frame = frames_T265.first(RS2_STREAM_ACCEL);
+            gyro_frame = frames_T265.first(RS2_STREAM_GYRO);
 
-            rs2_vector accel_sample = accel_frame.get_motion_data();
-            rs2_vector gyro_sample = gyro_frame.get_motion_data();
+            accel_sample = accel_frame.get_motion_data();
+            gyro_sample = gyro_frame.get_motion_data();
+
+            // std::cout << " ACCEL SAMPLE........ " << accel_sample << " .......END "<< std::endl;
+            // std::cout << " GYRO  SAMPLE........ " << gyro_sample << " .......END "<< std::endl;
 
             // std::cout << " ACCEL " << accel_sample.x << " - " << accel_sample.y << " - " << accel_sample.z << std::endl;
 
-            auto millisec_since_epoch = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
-            double frame_timestamp_s = millisec_since_epoch / 1000000000.0;
+            // auto millisec_since_epoch = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
+            // double frame_timestamp_s = millisec_since_epoch / 1000000000.0;
        
+            // vImuMeas.push_back(ORB_SLAM3::IMU::Point(accel_sample.x, accel_sample.y, accel_sample.z,
+            //                                         gyro_sample.x, gyro_sample.y, gyro_sample.z,
+            //                                         frame_timestamp_s));
+
             vImuMeas.push_back(ORB_SLAM3::IMU::Point(accel_sample.x, accel_sample.y, accel_sample.z,
                                                     gyro_sample.x, gyro_sample.y, gyro_sample.z,
-                                                    frame_timestamp_s));
+                                                    gyro_frame.get_timestamp()));
+
+            std::cout << " TIMESTAMP : " << accel_frame.get_timestamp() << std::endl;
             
             counter ++;
         }
@@ -153,6 +167,7 @@ int main(int argc, char * argv[])
         if(vImuMeas.size() > 0)
         {
             frame_timestamp_s = vImuMeas[vImuMeas.size()-1].t;
+            std::cout << "HELLOOOOOO " << vImuMeas[0].t << std::endl;
         }
         else
         {
@@ -169,13 +184,51 @@ int main(int argc, char * argv[])
         vImuMeas.clear();
 
         // D435 FRAME
-        cv::imshow("disparity", imLeftRect);
+        // cv::imshow("disparity", imLeftRect);
         if (cv::waitKey(1) == 'q') {
             break;
         }   
-        std::cout << std::endl;     
+        // std::cout << " ...........WHILE END.......... " << std::endl;     
     }
 
     // Stop all SLAM threads
     SLAM.Shutdown();
 }
+
+
+
+// // Wait for the next set of frames from the camera
+// auto frames = pipe.wait_for_frames();
+// // Get a frame from the pose stream
+// auto f = frames.first_or_default(RS2_STREAM_POSE);
+// // Cast the frame to pose_frame and get its data
+// auto pose_data = f.as<rs2::pose_frame>().get_pose_data();
+
+
+// while (1)
+// {
+//     while (counter < 10)
+//     {
+//         auto frames = pipe.wait_for_frames();
+//         f = frames.first_or_default(RS2_STREAM_POSE);
+//         pose_data = f.as<rs2::pose_frame>().get_pose_data();
+
+//         // auto millisec_since_epoch = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
+//         // double frame_timestamp_s = millisec_since_epoch / 1000000000.0;
+
+//         vImuMeas.push_back(ORB_SLAM3::IMU::Point(pose_data.acceleration.x, pose_data.acceleration.y, pose_data.acceleration.z,
+//                                                 pose_data.angular_velocity.x, pose_data.angular_velocity.y, pose_data.angular_velocity.z,
+//                                                 pose_data.));
+
+//         // Print the x, y, z values of the acceleration, relative to initial position
+//         std::cout << "\r" << "Device Position: " << std::setprecision(3) << std::fixed << pose_data.acceleration.x << " " <<
+//             pose_data.acceleration.y << " " << pose_data.acceleration.z << " (meters/sec2)" << std::endl;
+        
+//         std::cout << "....................." << std::endl;
+
+//         std::cout << "\r" << "Device Position: " << std::setprecision(3) << std::fixed << pose_data.angular_velocity.x << " " <<
+//             pose_data.angular_velocity.y << " " << pose_data.angular_velocity.z << " (radian/sec)" << std::endl;
+        
+//         counter ++;
+//     }
+// counter = 0;
