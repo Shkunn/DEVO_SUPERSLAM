@@ -159,6 +159,9 @@ add_executable(try_solo
 Examples/Stereo/try_solo.cc)
 target_link_libraries(try_solo realsense2 ${PROJECT_NAME})
 
+add_executable(stereo_fisheye
+Examples/Stereo/stereo_fisheye.cpp)
+target_link_libraries(stereo_fisheye realsense2 ${PROJECT_NAME})
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular)
 
@@ -223,6 +226,10 @@ target_link_libraries(INTEL_SLAM realsense2 ${PROJECT_NAME})
 add_executable(INTEL_SLAM_POSE
 Examples/Stereo-Inertial/INTEL_SLAM_POSE.cpp)
 target_link_libraries(INTEL_SLAM_POSE realsense2 ${PROJECT_NAME})
+
+add_executable(inertial_fisheye
+Examples/Stereo-Inertial/inertial_fisheye.cpp)
+target_link_libraries(inertial_fisheye realsense2 ${PROJECT_NAME})
 
 ############### INTEL REALSENSE : LIBREALSENSE ###############
 

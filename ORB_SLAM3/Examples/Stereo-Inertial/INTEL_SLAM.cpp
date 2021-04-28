@@ -107,7 +107,7 @@ int main(int argc, char * argv[])
     rs2::frameset frames_T265 = pipe_t265.wait_for_frames();
     rs2::motion_frame accel_frame = frames_T265.first(RS2_STREAM_ACCEL);
     rs2::motion_frame gyro_frame = frames_T265.first(RS2_STREAM_GYRO);
-    rs2_vector accel_sample = accel_frame.get_motion_data();;
+    rs2_vector accel_sample = accel_frame.get_motion_data();
     rs2_vector gyro_sample = gyro_frame.get_motion_data();
 
     while (1)

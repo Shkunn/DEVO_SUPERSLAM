@@ -85,6 +85,7 @@ int main(int argc, char *argv[]) {
     int width = 640;
 	int height = 480;
 	int fps = 30;
+    
 	rs2::config config;
 	config.enable_stream(RS2_STREAM_INFRARED, 1, width, height, RS2_FORMAT_Y8, fps);
 	config.enable_stream(RS2_STREAM_INFRARED, 2, width, height, RS2_FORMAT_Y8, fps);

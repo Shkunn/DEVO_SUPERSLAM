@@ -94,12 +94,12 @@ int main(int argc, char * argv[]) try
         auto pose_data = f.as<rs2::pose_frame>().get_pose_data();
 
         // Print the x, y, z values of the acceleration, relative to initial position
-        std::cout << "\r" << "Device Position: " << std::setprecision(3) << std::fixed << pose_data.acceleration.x << " " <<
+        std::cout << "\r" << "Device Acceleration:      " << std::setprecision(3) << std::fixed << pose_data.acceleration.x << " " <<
             pose_data.acceleration.y << " " << pose_data.acceleration.z << " (meters/sec2)" << std::endl;
         
         std::cout << "....................." << std::endl;
 
-        std::cout << "\r" << "Device Position: " << std::setprecision(3) << std::fixed << pose_data.angular_velocity.x << " " <<
+        std::cout << "\r" << "Device Angular Velocity:  " << std::setprecision(3) << std::fixed << pose_data.angular_velocity.x << " " <<
             pose_data.angular_velocity.y << " " << pose_data.angular_velocity.z << " (radian/sec)" << std::endl;
     }
     return EXIT_SUCCESS;
