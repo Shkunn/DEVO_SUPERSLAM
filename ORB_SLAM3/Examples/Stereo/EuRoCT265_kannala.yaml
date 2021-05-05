@@ -3,42 +3,96 @@
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
 #--------------------------------------------------------------------------------------------
-Camera.type: "PinHole"
+Camera.type: "KannalaBrandt8"
 
 # Camera calibration and distortion parameters (OpenCV) 
-Camera.fx: 392.008850097656
-Camera.fy: 392.008850097656
-Camera.cx: 321.213836669922
-Camera.cy: 238.390502929688
+Camera.fx: 286.304595947266
+Camera.fy: 286.273712158203
+Camera.cx: 417.1953125
+Camera.cy: 399.115386962891
 
-Camera.k1: 0.0
-Camera.k2: 0.0
-Camera.p1: 0.0
-Camera.p2: 0.0
+Camera.k1: -0.00604297406971455
+Camera.k2: 0.0451732017099857
+Camera.k3: -0.0425471812486649
+Camera.k4: 0.00776465190574527
 
-Camera.bFishEye: 0
+Camera2.fx: 286.679809570312
+Camera2.fy: 398.772491455078
+Camera2.cx: 422.400695800781
+Camera2.cy: 398.772491455078
 
-Camera.width: 640
-Camera.height: 480
+Camera2.k1: -0.00477181980386376
+Camera2.k2: 0.0391876511275768
+Camera2.k3: -0.0359093882143497
+Camera2.k4: 0.00556322885677218
+
+
+Camera.width: 848
+Camera.height: 800
+# Camera.width: 400
+# Camera.height: 400
+
+# Transformation matrix from right camera to left camera
+Tlr: !!opencv-matrix
+  rows: 3
+  cols: 4
+  dt: f
+  data: [ 0.999978,   -0.00323313 ,   0.0057821,   0.0640591755509377,
+            0.0032539,   0.999988,   -0.00358705,   0.000455161061836407,
+            -0.00577044,  0.00360578,   0.999977,   -0.00033137749414891]
 
 # Camera frames per second 
 Camera.fps: 30.0
 
 # stereo baseline times fx
-Camera.bf: 49.974
+Camera.bf: 18.600217743 #64.0611
+
+# Lapping area between images
+Camera.lappingBegin: 0
+Camera.lappingEnd: 848
+
+Camera2.lappingBegin: 0
+Camera2.lappingEnd: 848
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
 
 # Close/Far threshold. Baseline times.
-ThDepth: 35.0
+ThDepth: 40.0
+
+# Transformation from camera 0 to body-frame (imu)
+Tbc: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: f
+   #MATRICE ROTATION : 180deg sur l'axe X
+   data: [-0.999977, -0.00122176, 0.00669396, 0.0106997508555651,
+         0.00122572, -0.999999, 0.000587821, -1.31152482936159e-05,
+         0.00669323, 0.000596012, 0.999977, -7.16175709385425e-05,
+         0.0, 0.0, 0.0, 1.0]
+         
+   # data: [0.999968402, -0.006753626, -0.004188075, -0.015890727,
+   #      -0.006685408, -0.999848172, 0.016093893, 0.028273059,
+   #      -0.004296131, -0.016065384, -0.999861654, -0.009375589,
+   #      0.0, 0.0, 0.0, 1.0]
+   #data: [0.99996844557311107367,    -0.0066854089239102572986, -0.0042961314561787004811, 0.01603896377533840482,
+   #       -0.0067536248703228746448, -0.99984809688221423239,   -0.01606538618191393505,   0.028010821767145943551,
+   #       -0.0041880752645753210024, 0.016093891536126118816,   -0.99986177353527180509,   -0.0098958681511030990335,
+   #       0.0,                       0.0,                       0.0,                       1.0]
+
+# IMU noise
+IMU.NoiseGyro: 0.0023
+IMU.NoiseAcc: 0.0082
+IMU.GyroWalk: 0.00071
+IMU.AccWalk: 0.010
+IMU.Frequency: 200
 
 # #--------------------------------------------------------------------------------------------
 # # Stereo Rectification. Only if you need to pre-rectify the images.
 # # Camera.fx, .fy, etc must be the same as in LEFT.P
 # #--------------------------------------------------------------------------------------------
-# LEFT.height: 720
-# LEFT.width: 1280
+# LEFT.height: 800
+# LEFT.width: 848
 # LEFT.D: !!opencv-matrix
 #    rows: 1
 #    cols: 5
@@ -58,10 +112,10 @@ ThDepth: 35.0
 #    rows: 3
 #    cols: 4
 #    dt: d
-#    data: [653.348083496094, 0, 642.023071289062, 0,  0, 653.348083496094, 357.317504882812, 0,  0, 0, 1, 0]
+#    data: [435.2046959714599, 0, 367.4517211914062, 0,  0, 435.2046959714599, 252.2008514404297, 0,  0, 0, 1, 0]
 
-# RIGHT.height: 720
-# RIGHT.width: 1280
+# RIGHT.height: 800
+# RIGHT.width: 848
 # RIGHT.D: !!opencv-matrix
 #    rows: 1
 #    cols: 5
@@ -81,27 +135,27 @@ ThDepth: 35.0
 #    rows: 3
 #    cols: 4
 #    dt: d
-#    data: [653.348083496094, 0, 642.023071289062, 0,  0, 653.348083496094, 357.317504882812, 0,  0, 0, 1, 0]
+#    data: [435.2046959714599, 0, 367.4517211914062, -47.90639384423901, 0, 435.2046959714599, 252.2008514404297, 0, 0, 0, 1, 0]
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
 #--------------------------------------------------------------------------------------------
 
 # ORB Extractor: Number of features per image
-ORBextractor.nFeatures: 600
+ORBextractor.nFeatures: 800
 
 # ORB Extractor: Scale factor between levels in the scale pyramid 	
-ORBextractor.scaleFactor: 1.2
+ORBextractor.scaleFactor: 1
 
 # ORB Extractor: Number of levels in the scale pyramid	
-ORBextractor.nLevels: 8
+ORBextractor.nLevels: 7
 
 # ORB Extractor: Fast threshold
 # Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
 # Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
 # You can lower these values if your images have low contrast			
-ORBextractor.iniThFAST: 20
-ORBextractor.minThFAST: 7
+ORBextractor.iniThFAST: 18
+ORBextractor.minThFAST: 5
 
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters
@@ -109,11 +163,10 @@ ORBextractor.minThFAST: 7
 Viewer.KeyFrameSize: 0.05
 Viewer.KeyFrameLineWidth: 1
 Viewer.GraphLineWidth: 0.9
-Viewer.PointSize:2
+Viewer.PointSize: 2
 Viewer.CameraSize: 0.08
 Viewer.CameraLineWidth: 3
 Viewer.ViewpointX: 0
 Viewer.ViewpointY: -0.7
 Viewer.ViewpointZ: -1.8
 Viewer.ViewpointF: 500
-

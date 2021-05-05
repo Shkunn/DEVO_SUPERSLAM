@@ -1910,8 +1910,6 @@ void Tracking::StereoInitialization()
     {
         if (mSensor == System::IMU_STEREO)
         {
-            // ici //
-            /*
             if (!mCurrentFrame.mpImuPreintegrated || !mLastFrame.mpImuPreintegrated)
             {
                 cout << "not IMU meas" << endl;
@@ -1922,7 +1920,7 @@ void Tracking::StereoInitialization()
             {
                 cout << "not enough acceleration" << endl;
                 return;
-            }*/
+            }
             
             if(mpImuPreintegratedFromLastKF)
                 delete mpImuPreintegratedFromLastKF;

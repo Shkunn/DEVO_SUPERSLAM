@@ -29,6 +29,11 @@
 
 using namespace cv;
 
+using std::chrono::duration_cast;
+using std::chrono::nanoseconds;
+using std::chrono::system_clock;
+
+
 /* -------------------------------------------------------------------------
  * CONSTANTS
  * ------------------------------------------------------------------------- */
@@ -79,22 +84,24 @@ int main(int argc, char *argv[]) {
 
     // The time of each frame is required for SLAM, so we take an epoch time
     // (i.e. our start time) now
-    auto slam_epoch = std::chrono::steady_clock::now();
+    // auto slam_epoch = std::chrono::steady_clock::now();
+
+    auto millisec_since_epoch = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
+    double frame_timestamp_s = millisec_since_epoch / 1000000000.0;
 
     // CAMERA.
     int width = 848;
 	int height = 800;
-	int fps = 30;
-
-    // CAMERA T265
+    
 	rs2::config config_t265;
-	std::string serial_number_t265 = "925122110153";
-	config_t265.enable_device(serial_number_t265); // Serial number of t265.
-    config_t265.enable_stream(RS2_STREAM_FISHEYE, 1, RS2_FORMAT_Y8);
+	config_t265.enable_stream(RS2_STREAM_FISHEYE, 1, RS2_FORMAT_Y8);
     config_t265.enable_stream(RS2_STREAM_FISHEYE, 2, RS2_FORMAT_Y8);
+    
+    rs2::pipeline pipeline;
+    pipeline.start(config_t265);
 
-   	rs2::pipeline pipe_t265;
-    pipe_t265.start(config_t265);
+
+    // Start pipeline with chosen configuration
 
     cv::Mat imLeft; 
     cv::Mat imRight; 
@@ -102,27 +109,18 @@ int main(int argc, char *argv[]) {
     // Now for the main loop
     while (1) {
 
-		// rs2::frameset frameset = pipeline.wait_for_frames();
+		rs2::frameset frameset = pipeline.wait_for_frames();
 
-		// rs2::video_frame ir_frame_left = frameset.get_infrared_frame(1);
-		// rs2::video_frame ir_frame_right = frameset.get_infrared_frame(2);
-
-        // imLeft = cv::Mat(cv::Size(width, height), CV_8UC1, (void*)ir_frame_left.get_data());
-        // imRight = cv::Mat(cv::Size(width, height), CV_8UC1, (void*)ir_frame_right.get_data());
-        rs2::frameset frameset = pipe_t265.wait_for_frames();
-
-		rs2::video_frame fisheye_frame_left = frameset.get_fisheye_frame(1);
+        rs2::video_frame fisheye_frame_left = frameset.get_fisheye_frame(1);
 		rs2::video_frame fisheye_frame_right = frameset.get_fisheye_frame(2);
 
         imLeft = cv::Mat(cv::Size(width, height), CV_8UC1, (void*)fisheye_frame_left.get_data());
         imRight = cv::Mat(cv::Size(width, height), CV_8UC1, (void*)fisheye_frame_right.get_data());
-
-        // Get the time between the epoch and now, allowing us to get a
-        // timestamp (in seconds) to pass into the slam system.
-        auto elapsed_time = std::chrono::steady_clock::now() - slam_epoch;
-        double frame_timestamp_s = elapsed_time.count() / 1000000000.0;
-
-        std::cout << std::setprecision(4) << "TimeStamp (sec): " << frame_timestamp_s << ": " << std::endl;
+        
+        auto millisec_since_epoch = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
+        double frame_timestamp_s = millisec_since_epoch / 1000000000.0;
+        
+        std::cout << "IMAGE TIMESTAMP: " << std::setprecision(20) << frameset.get_timestamp() << std::endl;
 
         // Into the SLAM system. This produces a matrix with
         // the pose information of the camera.
@@ -130,6 +128,7 @@ int main(int argc, char *argv[]) {
             imLeft,
             imRight,
             frame_timestamp_s  // rs2::frameset frameset = pipe.wait_for_frames();
+        // Pass the images i
         );
 
         // The output pose may be empty if the system was unable to track the
@@ -147,23 +146,22 @@ int main(int argc, char *argv[]) {
 
             // Print the updated position, but transpose it so that instead of
             // a column vector we have a row vector, which is easier to read.
-            // std::cout << 
-            //     "position: " << 
-            //     pose.position.t() << 
-            //     std::endl;
+            std::cout << 
+                "position: " << 
+                pose.position.t() << 
+                std::endl;
         }
         else {
             // If we didn't get a pose update log it.
             std::cout << "no pose update" << std::endl;
         }
 
-        // // Apply a colormap to the filtered disparity map, but don't normalise
-        // // it. Normalising the map will mean that the color doesn't correspond
-        // // directly with disparity.
+        // Apply a colormap to the filtered disparity map, but don't normalise
+        // it. Normalising the map will mean that the color doesn't correspond
+        // directly with disparity.
         // cv::Mat colour_disp;
-        // /*cv::applyColorMap(imLeft, colour_disp, cv::COLORMAP_JET);*/
-        
-        // cv::imshow("disparity", imLeft);
+        /*cv::applyColorMap(imLeft, colour_disp, cv::COLORMAP_JET);*/
+        cv::imshow("disparity", imLeft);
 
         // See if q pressed, if so quit
         if (cv::waitKey(1) == 'q') {

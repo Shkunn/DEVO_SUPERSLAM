@@ -137,7 +137,7 @@ int main(int argc, char * argv[])
                                                     gyro_sample.x, gyro_sample.y, gyro_sample.z,
                                                     gyro_frame.get_timestamp()));
 
-            std::cout << " TIMESTAMP : " << accel_frame.get_timestamp() << std::endl;
+            std::cout << " TIMESTAMP : " << gyro_frame.get_timestamp() << std::endl;
             
             counter ++;
         }
@@ -167,13 +167,13 @@ int main(int argc, char * argv[])
         if(vImuMeas.size() > 0)
         {
             frame_timestamp_s = vImuMeas[vImuMeas.size()-1].t;
-            std::cout << "HELLOOOOOO " << vImuMeas[0].t << std::endl;
+            std::cout << "HELLOOOOOO " << frame_timestamp_s << std::endl;
         }
         else
         {
             millisec_since_epoch = duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
             frame_timestamp_s = millisec_since_epoch / 1000000000.0;
-        } 
+        }
 
         cv::Mat raw_pose = SLAM.TrackStereo(
             imLeftRect,

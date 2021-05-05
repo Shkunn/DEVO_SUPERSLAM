@@ -83,28 +83,52 @@ int main(int argc, char *argv[]) {
     int counter = 0;
 
     // CAMERA.
-    int width = 848;
-	int height = 800;
-	// int fps = 30;
+    int width = 640;
+	int height = 480;
+	int fps = 30;
+    
+	rs2::config config;
+	config.enable_stream(RS2_STREAM_INFRARED, 1, width, height, RS2_FORMAT_Y8, fps);
+	config.enable_stream(RS2_STREAM_INFRARED, 2, width, height, RS2_FORMAT_Y8, fps);
 
-    // CAMERA T265
-	rs2::config config_t265;
-	std::string serial_number_t265 = "925122110153";
+    // start pipeline
+	rs2::pipeline pipeline;
+	rs2::pipeline_profile pipeline_profile = pipeline.start(config);
+    rs2::device select_divise = pipeline_profile.get_device();
+    auto depth_depth = select_divise.first<rs2::depth_sensor>();
+	depth_depth.set_option(RS2_OPTION_EMITTER_ENABLED, 0);
+
+    rs2::frameset frameset = pipeline.wait_for_frames();
+
+    rs2::video_frame ir_frame_left = frameset.get_infrared_frame(1);
+    // rs2::video_frame ir_frame_right = frameset.get_infrared_frame(2);
+
+    auto last_timestamp = ir_frame_left.get_timestamp();
+    auto new_timestamp = ir_frame_left.get_timestamp();
+
+    // // CAMERA.
+    // int width = 848;
+	// int height = 800;
+	// // int fps = 30;
+
+    // // CAMERA T265
+	// rs2::config config_t265;
+	// std::string serial_number_t265 = "925122110153";
 	
-    config_t265.enable_device(serial_number_t265); // Serial number of t265.
-    config_t265.enable_stream(RS2_STREAM_FISHEYE, 1, RS2_FORMAT_Y8, 30);
-    config_t265.enable_stream(RS2_STREAM_FISHEYE, 2, RS2_FORMAT_Y8, 30);
-    config_t265.enable_stream(RS2_STREAM_GYRO);
-    config_t265.enable_stream(RS2_STREAM_ACCEL);
+    // config_t265.enable_device(serial_number_t265); // Serial number of t265.
+    // config_t265.enable_stream(RS2_STREAM_FISHEYE, 1, RS2_FORMAT_Y8, 30);
+    // config_t265.enable_stream(RS2_STREAM_FISHEYE, 2, RS2_FORMAT_Y8, 30);
+    // // config_t265.enable_stream(RS2_STREAM_GYRO);
+    // // config_t265.enable_stream(RS2_STREAM_ACCEL);
 
-   	rs2::pipeline pipe_t265;
-    pipe_t265.start(config_t265);
+   	// rs2::pipeline pipe_t265;
+    // pipe_t265.start(config_t265);
 
-    rs2::frameset frames_T265 = pipe_t265.wait_for_frames();
-    rs2::motion_frame accel_frame = frames_T265.first(RS2_STREAM_ACCEL);
-    rs2::motion_frame gyro_frame = frames_T265.first(RS2_STREAM_GYRO);
-    rs2_vector accel_sample = accel_frame.get_motion_data();
-    rs2_vector gyro_sample = gyro_frame.get_motion_data();
+    // rs2::frameset frames_T265 = pipe_t265.wait_for_frames();
+    // rs2::motion_frame accel_frame = frames_T265.first(RS2_STREAM_ACCEL);
+    // rs2::motion_frame gyro_frame = frames_T265.first(RS2_STREAM_GYRO);
+    // rs2_vector accel_sample = accel_frame.get_motion_data();
+    // rs2_vector gyro_sample = gyro_frame.get_motion_data();
 
     cv::Mat imLeft;
     cv::Mat imRight;
@@ -114,36 +138,59 @@ int main(int argc, char *argv[]) {
     // Fps fps;
 
     // Now for the main loop
-    rs2::frameset frameset = pipe_t265.wait_for_frames();
+    // rs2::frameset frameset = pipe_t265.wait_for_frames();
 
-	rs2::video_frame fisheye_frame_left = frameset.get_fisheye_frame(1);
+	// rs2::video_frame fisheye_frame_left = frameset.get_fisheye_frame(1);
 
-    auto last_time_stamp = fisheye_frame_left.get_timestamp();
+    // auto last_timestamp = fisheye_frame_left.get_timestamp();
+    // auto new_timestamp = fisheye_frame_left.get_timestamp();
 
     while (1) {
 
-		frameset = pipe_t265.wait_for_frames();
+		// frameset = pipe_t265.wait_for_frames();
 
-		fisheye_frame_left = frameset.get_fisheye_frame(1);
+		// fisheye_frame_left = frameset.get_fisheye_frame(1);
 
-        // std::cout << std::setprecision(20) << "TimeStamp: " << fisheye_frame_left.get_timestamp() << ": " << std::endl;
-		// rs2::video_frame fisheye_frame_right = frameset.get_fisheye_frame(2);
+        // new_timestamp = fisheye_frame_left.get_timestamp();
+        // std::cout << std::setprecision(20) << "New_timestamp: " << new_timestamp << std::endl; 
 
-        // std::cout << std::setprecision(4) << "TimeStamp: " << frameset.get_frame_number() << std::endl;
+
+        // // std::cout << std::setprecision(20) << "TimeStamp: " << fisheye_frame_left.get_timestamp() << ": " << std::endl;
+		// // rs2::video_frame fisheye_frame_right = frameset.get_fisheye_frame(2);
+
+        // // std::cout << std::setprecision(4) << "TimeStamp: " << frameset.get_frame_number() << std::endl;
         
-        // std::cout << std::setprecision(4) << "Interval: " << fps << std::endl;
+        // // std::cout << std::setprecision(4) << "Interval: " << fps << std::endl;
 
-        imLeft = cv::Mat(cv::Size(width, height), CV_8UC1, (void*)fisheye_frame_left.get_data());
-        // imRight = cv::Mat(cv::Size(width, height), CV_8UC1, (void*)fisheye_frame_right.get_data());
+        // imLeft = cv::Mat(cv::Size(width, height), CV_8UC1, (void*)fisheye_frame_left.get_data());
+        // // imRight = cv::Mat(cv::Size(width, height), CV_8UC1, (void*)fisheye_frame_right.get_data());
 
-        // Get the time between the epoch and now, allowing us to get a
-        // timestamp (in seconds) to pass into the slam system.
-        // auto elapsed_time = std::chrono::steady_clock::now() - slam_epoch;
-        // double frame_timestamp_s = elapsed_time.count() / 1000000000.0;
+        // // Get the time between the epoch and now, allowing us to get a
+        // // timestamp (in seconds) to pass into the slam system.
+        // // auto elapsed_time = std::chrono::steady_clock::now() - slam_epoch;
+        // // double frame_timestamp_s = elapsed_time.count() / 1000000000.0;
 
-        std::cout << 1 / (fisheye_frame_left.get_timestamp() - last_time_stamp) * 1000 << " fps" << std::endl; 
+        // std::cout << 1 / (new_timestamp - last_timestamp) * 1000 << " fps" << std::endl; 
 
-        last_time_stamp = fisheye_frame_left.get_timestamp();
+        // last_timestamp = new_timestamp;
+
+
+        frameset = pipeline.wait_for_frames();
+
+        new_timestamp = ir_frame_left.get_timestamp();
+
+		ir_frame_left = frameset.get_infrared_frame(1);
+		// ir_frame_right = frameset.get_infrared_frame(2);
+
+        imLeft = cv::Mat(cv::Size(width, height), CV_8UC1, (void*)ir_frame_left.get_data());
+        // imRight = cv::Mat(cv::Size(width, height), CV_8UC1, (void*)ir_frame_right.get_data());
+
+        std::cout << 1 / (new_timestamp - last_timestamp) * 1000 << " fps" << std::endl; 
+
+        std::cout << std::setprecision(20) << "TimeStamp: " << new_timestamp << ": " << std::endl;
+
+
+        last_timestamp = new_timestamp;
         
         // if (frame_timestamp_s >= 1){
             

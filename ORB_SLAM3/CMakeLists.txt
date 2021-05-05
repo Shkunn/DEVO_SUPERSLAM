@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.16)
 project(ORB_SLAM3 LANGUAGES CXX C)
 
 IF(NOT CMAKE_BUILD_TYPE)
@@ -230,6 +230,14 @@ target_link_libraries(INTEL_SLAM_POSE realsense2 ${PROJECT_NAME})
 add_executable(inertial_fisheye
 Examples/Stereo-Inertial/inertial_fisheye.cpp)
 target_link_libraries(inertial_fisheye realsense2 ${PROJECT_NAME})
+
+# add_executable(stereo_fisheye_imu_mix
+# Examples/Stereo-Inertial/stereo_fisheye_imu_mix.cpp)
+# target_link_libraries(stereo_fisheye_imu_mix realsense2 ${PROJECT_NAME})
+
+add_executable(test_ORB
+Examples/Stereo-Inertial/test_ORB.cpp)
+target_link_libraries(test_ORB realsense2 ${PROJECT_NAME})
 
 ############### INTEL REALSENSE : LIBREALSENSE ###############
 
